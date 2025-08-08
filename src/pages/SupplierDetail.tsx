@@ -46,7 +46,15 @@ const SupplierDetail = () => {
         </article>
         <aside className="p-6 rounded-xl border">
           <h3 className="font-semibold mb-2">聯絡方式</h3>
-          <p className="text-sm">Email：{supplier.contact}</p>
+          {supplier.contact.startsWith("http") ? (
+            <p className="text-sm">
+              官方網站：<a href={supplier.contact} target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">前往</a>
+            </p>
+          ) : (
+            <p className="text-sm">
+              Email：<a href={`mailto:${supplier.contact}`} className="underline hover:text-primary">{supplier.contact}</a>
+            </p>
+          )}
           <Link to="/suppliers" className="text-sm text-primary mt-4 inline-block">返回名錄</Link>
         </aside>
       </section>
