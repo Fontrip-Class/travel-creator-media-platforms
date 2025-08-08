@@ -7,13 +7,26 @@ export type Supplier = {
   description: string;
 };
 
+export type Asset = {
+  id: string;
+  title: string;
+  type: string;
+  url?: string;
+  date?: string;
+  description?: string;
+};
+
 export type Creator = {
   id: string;
   name: string;
   niches: string[];
-  platforms: string[];
-  contact: string;
+  platforms: string[]; // 平台名稱或型態（顯示用）
+  contact: string; // email 或 官方網站
   bio: string;
+  rating?: number; // 0-5
+  ratingCount?: number;
+  links?: string[]; // 社群/官網連結（SEO sameAs）
+  assets?: Asset[]; // 過往行銷素材
 };
 
 export type Media = {
@@ -35,6 +48,41 @@ export const creators: Creator[] = [
   { id: "c-201", name: "Luna Travel", niches: ["美食","城市","旅拍"], platforms: ["YouTube","Instagram"], contact: "luna@creator.co", bio: "熱愛美食與城市故事，擅長短影片與圖文長文。" },
   { id: "c-202", name: "Outdoor Ken", niches: ["登山","露營"], platforms: ["YouTube","Threads"], contact: "ken@creator.co", bio: "戶外專題與裝備評測，紀錄路線攻略。" },
   { id: "c-203", name: "Diving Mia", niches: ["海島","自由潛水"], platforms: ["Instagram","TikTok"], contact: "mia@creator.co", bio: "藍色星球的追光者，擅長水下攝影。" },
+  {
+    id: "c-204",
+    name: "優尼太太",
+    niches: ["料理","生活","親子"],
+    platforms: ["YouTube","Instagram","部落格"],
+    contact: "https://mrsyuny.com/about/",
+    bio: "以料理、生活靈感與親子分享為主題的創作者，擅長以圖文與影音呈現實用教學與美感風格。",
+    rating: 4.8,
+    ratingCount: 132,
+    links: ["https://mrsyuny.com/"],
+    assets: [
+      {
+        id: "a-1",
+        title: "家常料理教學：五道快速晚餐",
+        type: "圖文",
+        url: "https://mrsyuny.com/",
+        date: "2024-05",
+        description: "以步驟圖文與成品照呈現，社群同步曝光。"
+      },
+      {
+        id: "a-2",
+        title: "品牌合作：廚具體驗短片",
+        type: "影音",
+        date: "2024-08",
+        description: "30秒短影音＋IG 限動導流，含拍攝與剪輯。"
+      },
+      {
+        id: "a-3",
+        title: "旅遊親子企劃：日月潭一日行",
+        type: "圖文/影音",
+        date: "2024-10",
+        description: "路線建議、景點介紹與親子友善資訊整合。"
+      }
+    ]
+  },
 ];
 
 export const medias: Media[] = [
