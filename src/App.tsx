@@ -14,6 +14,14 @@ import CreatorsList from "./pages/CreatorsList";
 import CreatorDetail from "./pages/CreatorDetail";
 import MediaList from "./pages/MediaList";
 import MediaDetail from "./pages/MediaDetail";
+import AdminLayout from "@/pages/admin/AdminLayout";
+import Dashboard from "@/pages/admin/Dashboard";
+import SuppliersAdmin from "@/pages/admin/Suppliers";
+import CreatorsAdmin from "@/pages/admin/Creators";
+import MediaAdmin from "@/pages/admin/Media";
+import TasksAdmin from "@/pages/admin/Tasks";
+import AssetsAdmin from "@/pages/admin/Assets";
+import PermissionsAdmin from "@/pages/admin/Permissions";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +41,18 @@ const App = () => (
             <Route path="/creators/:id" element={<CreatorDetail />} />
             <Route path="/media" element={<MediaList />} />
             <Route path="/media/:id" element={<MediaDetail />} />
+
+            {/* Admin */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="suppliers" element={<SuppliersAdmin />} />
+              <Route path="creators" element={<CreatorsAdmin />} />
+              <Route path="media" element={<MediaAdmin />} />
+              <Route path="tasks" element={<TasksAdmin />} />
+              <Route path="assets" element={<AssetsAdmin />} />
+              <Route path="permissions" element={<PermissionsAdmin />} />
+            </Route>
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

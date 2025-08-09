@@ -7,6 +7,7 @@ const navItems = [
   { to: "/suppliers", label: "供應商名錄" },
   { to: "/creators", label: "創作者名錄" },
   { to: "/media", label: "媒體名錄" },
+  { to: "/admin", label: "管理後台" },
 ];
 
 const SiteHeader = () => {
