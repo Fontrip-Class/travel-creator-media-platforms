@@ -22,6 +22,8 @@ import MediaAdmin from "@/pages/admin/Media";
 import TasksAdmin from "@/pages/admin/Tasks";
 import AssetsAdmin from "@/pages/admin/Assets";
 import PermissionsAdmin from "@/pages/admin/Permissions";
+import Register from "@/pages/auth/Register";
+import Login from "@/pages/auth/Login";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,9 @@ const App = () => (
               <Route path="assets" element={<AssetsAdmin />} />
               <Route path="permissions" element={<PermissionsAdmin />} />
             </Route>
+
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
