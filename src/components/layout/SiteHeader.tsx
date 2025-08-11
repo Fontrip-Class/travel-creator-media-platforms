@@ -4,6 +4,9 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
+  { to: "/about", label: "平台介紹" },
+  { to: "/pricing", label: "服務與價格" },
+  { to: "/faq", label: "FAQ" },
   { to: "/suppliers", label: "供應商名錄" },
   { to: "/creators", label: "創作者名錄" },
   { to: "/media", label: "媒體名錄" },

@@ -213,6 +213,7 @@ export default function Index() {
                 reward: "NT$ 15,000",
                 deadline: "2024-03-20",
                 location: "台東縣",
+                spec: "短影音 30-60秒｜9:16｜含拍攝與剪輯",
                 tags: ["旅遊", "影音", "部落格"]
               },
               {
@@ -221,6 +222,7 @@ export default function Index() {
                 reward: "NT$ 8,000",
                 deadline: "2024-03-15",
                 location: "花蓮縣",
+                spec: "圖片組 8-12張｜先修色｜1080x1350",
                 tags: ["溫泉", "社群", "攝影"]
               },
               {
@@ -229,6 +231,7 @@ export default function Index() {
                 reward: "NT$ 20,000",
                 deadline: "2024-04-01",
                 location: "澎湖縣",
+                spec: "圖文長文 1 篇｜1200 字以上｜含 5-8 張圖",
                 tags: ["水上活動", "美食", "綜合"]
               }
             ].map((task, index) => (
@@ -250,6 +253,9 @@ export default function Index() {
                     {task.location}
                     <Calendar size={14} className="ml-4 mr-1" />
                     {task.deadline}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    行銷素材類型與規格：{task.spec}
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {task.tags.map((tag, i) => (
@@ -337,6 +343,29 @@ export default function Index() {
                   </div>
                 </CardContent>
               </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Success Stories */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold mb-2">成功案例</h2>
+            <p className="text-muted-foreground">目前尚無公開案例，以下為示意版面，待您提供資料即可替換。</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-lg border p-6 shadow-card bg-card">
+                <div className="text-sm text-muted-foreground mb-2">旅遊品牌 · 社群活動</div>
+                <h3 className="font-semibold mb-3">示意案例 {i}</h3>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• 觸及：—</li>
+                  <li>• 互動率：—</li>
+                  <li>• 內容形式：圖文 / 短影音</li>
+                </ul>
+              </div>
             ))}
           </div>
         </div>

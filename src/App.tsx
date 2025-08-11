@@ -24,7 +24,9 @@ import AssetsAdmin from "@/pages/admin/Assets";
 import PermissionsAdmin from "@/pages/admin/Permissions";
 import Register from "@/pages/auth/Register";
 import Login from "@/pages/auth/Login";
-
+import About from "@/pages/About";
+import Pricing from "@/pages/Pricing";
+import FAQ from "@/pages/FAQ";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -37,6 +39,9 @@ const App = () => (
           <SiteHeader />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/faq" element={<FAQ />} />
             <Route path="/suppliers" element={<SuppliersList />} />
             <Route path="/suppliers/:id" element={<SupplierDetail />} />
             <Route path="/creators" element={<CreatorsList />} />
