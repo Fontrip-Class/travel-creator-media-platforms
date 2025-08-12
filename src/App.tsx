@@ -27,6 +27,9 @@ import Login from "@/pages/auth/Login";
 import About from "@/pages/About";
 import Pricing from "@/pages/Pricing";
 import FAQ from "@/pages/FAQ";
+import SuppliersLanding from "@/pages/roles/SuppliersLanding";
+import CreatorsLanding from "@/pages/roles/CreatorsLanding";
+import MediaLanding from "@/pages/roles/MediaLanding";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -42,6 +45,11 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/faq" element={<FAQ />} />
+            {/* Role landing pages */}
+            <Route path="/for-suppliers" element={<SuppliersLanding />} />
+            <Route path="/for-creators" element={<CreatorsLanding />} />
+            <Route path="/for-media" element={<MediaLanding />} />
+            {/* Directories */}
             <Route path="/suppliers" element={<SuppliersList />} />
             <Route path="/suppliers/:id" element={<SupplierDetail />} />
             <Route path="/creators" element={<CreatorsList />} />

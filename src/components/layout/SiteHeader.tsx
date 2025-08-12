@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { to: "/about", label: "平台介紹" },
+  { to: "/for-suppliers", label: "供應商方案" },
+  { to: "/for-creators", label: "創作者方案" },
+  { to: "/for-media", label: "媒體方案" },
   { to: "/pricing", label: "服務與價格" },
   { to: "/faq", label: "FAQ" },
   { to: "/suppliers", label: "供應商名錄" },
