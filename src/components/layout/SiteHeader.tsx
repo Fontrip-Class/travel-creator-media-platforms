@@ -2,19 +2,17 @@ import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuTrigger,
+  NavigationMenuContent,
+  NavigationMenuLink,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 
-const navItems = [
-  { to: "/about", label: "平台介紹" },
-  { to: "/for-suppliers", label: "供應商方案" },
-  { to: "/for-creators", label: "創作者方案" },
-  { to: "/for-media", label: "媒體方案" },
-  { to: "/pricing", label: "服務與價格" },
-  { to: "/faq", label: "FAQ" },
-  { to: "/suppliers", label: "供應商名錄" },
-  { to: "/creators", label: "創作者名錄" },
-  { to: "/media", label: "媒體名錄" },
-  { to: "/admin", label: "管理後台" },
-];
+// Navigation grouped using NavigationMenu: 方案、名錄、與一般連結
 
 const SiteHeader = () => {
   const [open, setOpen] = useState(false);
@@ -28,17 +26,61 @@ const SiteHeader = () => {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `text-sm transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger>方案</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="grid gap-3 p-4 md:w-[500px] lg:w-[600px] lg:grid-cols-3">
+                    <NavLink to="/for-suppliers" className="block rounded-md p-3 hover:bg-muted" aria-label="供應商方案">
+                      <div className="text-sm font-medium">供應商方案</div>
+                      <p className="text-xs text-muted-foreground">發佈任務、媒合創作者</p>
+                    </NavLink>
+                    <NavLink to="/for-creators" className="block rounded-md p-3 hover:bg-muted" aria-label="創作者方案">
+                      <div className="text-sm font-medium">創作者方案</div>
+                      <p className="text-xs text-muted-foreground">申請合作、建立作品</p>
+                    </NavLink>
+                    <NavLink to="/for-media" className="block rounded-md p-3 hover:bg-muted" aria-label="媒體方案">
+                      <div className="text-sm font-medium">媒體方案</div>
+                      <p className="text-xs text-muted-foreground">搜尋下載素材</p>
+                    </NavLink>
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <NavigationMenuTrigger>名錄</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-3">
+                    <NavLink to="/suppliers" className="block rounded-md p-3 hover:bg-muted">供應商名錄</NavLink>
+                    <NavLink to="/creators" className="block rounded-md p-3 hover:bg-muted">創作者名錄</NavLink>
+                    <NavLink to="/media" className="block rounded-md p-3 hover:bg-muted">媒體名錄</NavLink>
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <NavLink to="/about" className={navigationMenuTriggerStyle()}>
+                  關於我們
+                </NavLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavLink to="/pricing" className={navigationMenuTriggerStyle()}>
+                  服務與價格
+                </NavLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavLink to="/faq" className={navigationMenuTriggerStyle()}>
+                  FAQ
+                </NavLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavLink to="/admin" className={navigationMenuTriggerStyle()}>
+                  管理後台
+                </NavLink>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
           <Button asChild variant="secondary">
             <a href="#contact" aria-label="聯絡我們">聯絡我們</a>
           </Button>
@@ -63,19 +105,29 @@ const SiteHeader = () => {
                 <X className="size-5" />
               </button>
             </div>
-            <div className="mt-4 flex flex-col gap-3">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setOpen(false)}
-                  className={({ isActive }) =>
-                    `text-sm ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              ))}
+            <div className="mt-4 flex flex-col gap-4">
+              <div>
+                <div className="text-xs text-muted-foreground mb-2">方案</div>
+                <div className="flex flex-col gap-2">
+                  <NavLink to="/for-suppliers" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>供應商方案</NavLink>
+                  <NavLink to="/for-creators" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>創作者方案</NavLink>
+                  <NavLink to="/for-media" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>媒體方案</NavLink>
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-2">名錄</div>
+                <div className="flex flex-col gap-2">
+                  <NavLink to="/suppliers" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>供應商名錄</NavLink>
+                  <NavLink to="/creators" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>創作者名錄</NavLink>
+                  <NavLink to="/media" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>媒體名錄</NavLink>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <NavLink to="/about" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>關於我們</NavLink>
+                <NavLink to="/pricing" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>服務與價格</NavLink>
+                <NavLink to="/faq" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>FAQ</NavLink>
+                <NavLink to="/admin" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>管理後台</NavLink>
+              </div>
               <Button asChild variant="secondary" className="w-full">
                 <a href="#contact" onClick={() => setOpen(false)}>聯絡我們</a>
               </Button>
