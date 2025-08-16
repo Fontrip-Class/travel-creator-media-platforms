@@ -53,18 +53,44 @@ All colors MUST be HSL.
     --brand-foreground: 210 40% 98%;
     --transition-smooth: all 0.25s cubic-bezier(.22,.61,.36,1);
 
-    /* Travel-themed shadows */
+    /* Travel-themed shadows & depth */
     --shadow-elegant: 0 16px 48px -16px hsl(var(--primary) / 0.25);
     --shadow-glow: 0 0 0 1px hsl(var(--primary) / 0.35), 0 16px 56px -18px hsl(var(--primary) / 0.45);
     --shadow-card: 0 4px 20px -4px hsl(var(--primary) / 0.15);
+    --shadow-soft: 0 2px 8px -2px hsl(var(--primary) / 0.1);
+    --shadow-floating: 0 8px 32px -8px hsl(var(--primary) / 0.2);
+    --shadow-inset: inset 0 2px 4px 0 hsl(var(--primary) / 0.05);
 
-    /* Travel gradients */
+    /* Travel gradients & visual depth */
     --gradient-ocean: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --gradient-forest: linear-gradient(135deg, hsl(var(--secondary)), hsl(142 51% 45%));
     --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
     --gradient-supplier: linear-gradient(135deg, hsl(204 100% 40%) 0%, hsl(204 100% 60%) 100%);
     --gradient-creator: linear-gradient(135deg, hsl(142 76% 36%) 0%, hsl(142 51% 45%) 100%);
     --gradient-media: linear-gradient(135deg, hsl(259 87% 60%) 0%, hsl(259 87% 70%) 100%);
+    --gradient-surface: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+    --gradient-overlay: linear-gradient(180deg, transparent 0%, hsl(var(--background) / 0.8) 100%);
+    
+    /* Typography scales */
+    --text-xs: 0.75rem;     /* 12px */
+    --text-sm: 0.875rem;    /* 14px */
+    --text-base: 1rem;      /* 16px */
+    --text-lg: 1.125rem;    /* 18px */
+    --text-xl: 1.25rem;     /* 20px */
+    --text-2xl: 1.5rem;     /* 24px */
+    --text-3xl: 1.875rem;   /* 30px */
+    --text-4xl: 2.25rem;    /* 36px */
+    --text-5xl: 3rem;       /* 48px */
+    --text-6xl: 3.75rem;    /* 60px */
+    
+    /* Spacing system */
+    --space-xs: 0.25rem;    /* 4px */
+    --space-sm: 0.5rem;     /* 8px */
+    --space-md: 1rem;       /* 16px */
+    --space-lg: 1.5rem;     /* 24px */
+    --space-xl: 2rem;       /* 32px */
+    --space-2xl: 3rem;      /* 48px */
+    --space-3xl: 4rem;      /* 64px */
 
     --radius: 0.5rem;
 
@@ -149,6 +175,7 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+  /* Background patterns & gradients */
   .bg-hero {
     background-image: var(--gradient-hero);
   }
@@ -161,23 +188,137 @@ All colors MUST be HSL.
   .bg-gradient-media {
     background-image: var(--gradient-media);
   }
+  .bg-gradient-surface {
+    background-image: var(--gradient-surface);
+  }
+  .bg-pattern-dots {
+    background-image: radial-gradient(circle, hsl(var(--muted-foreground) / 0.15) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  /* Shadow system */
   .shadow-elegant {
     box-shadow: var(--shadow-elegant);
   }
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+  .shadow-floating {
+    box-shadow: var(--shadow-floating);
+  }
+  .shadow-inset {
+    box-shadow: var(--shadow-inset);
+  }
+  
+  /* Interactive states */
   .interactive-shadow {
-    box-shadow: var(--shadow-elegant);
-    transition: box-shadow 200ms ease;
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-smooth);
   }
   .interactive-shadow:hover,
   .interactive-shadow:focus-visible {
     box-shadow: var(--shadow-glow);
+    transform: translateY(-2px);
   }
+  
+  /* Glass morphism */
   .glass {
-    backdrop-filter: saturate(140%) blur(10px);
-    background-color: hsl(var(--card) / 0.6);
+    backdrop-filter: saturate(140%) blur(12px);
+    background-color: hsl(var(--card) / 0.7);
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+  .glass-strong {
+    backdrop-filter: saturate(180%) blur(20px);
+    background-color: hsl(var(--card) / 0.9);
     border: 1px solid hsl(var(--border) / 0.5);
+  }
+  
+  /* Layout utilities */
+  .section-padding {
+    padding: var(--space-3xl) var(--space-md);
+  }
+  .container-padding {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+  
+  /* Text utilities */
+  .text-gradient {
+    background: var(--gradient-hero);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  /* Responsive grid utilities */
+  .grid-responsive {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-lg);
+  }
+  .grid-responsive-sm {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-md);
+  }
+}
+
+@layer components {
+  /* Keyframe animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  /* Component base styles */
+  .card-enhanced {
+    @apply relative overflow-hidden bg-card border border-border/50 rounded-lg shadow-card;
+    @apply hover:shadow-floating hover:border-border transition-all duration-300;
+  }
+  
+  .card-interactive {
+    @apply card-enhanced cursor-pointer;
+    @apply hover:-translate-y-1 hover:shadow-elegant;
+  }
+  
+  .button-gradient {
+    @apply relative overflow-hidden font-medium text-white border-0;
+    @apply hover:opacity-90 active:scale-95 transition-all duration-200;
+  }
+  
+  .section-header {
+    @apply text-center mb-16;
+  }
+  
+  .section-title {
+    @apply text-3xl md:text-4xl font-bold mb-4 text-gradient;
+  }
+  
+  .section-subtitle {
+    @apply text-xl text-muted-foreground max-w-2xl mx-auto;
   }
 }
