@@ -12,6 +12,11 @@ const statuses = [
   { value: "review", label: "審核中" },
   { value: "doing", label: "進行中" },
   { value: "done", label: "已完成" },
+  { value: "cancelled", label: "已取消" },
+  { value: "paused", label: "暫停招募" },
+  { value: "re-recruiting", label: "重新招募" },
+  { value: "expired", label: "已過期" },
+  { value: "rejected", label: "申請被拒" },
 ];
 
 export default function TasksAdmin() {

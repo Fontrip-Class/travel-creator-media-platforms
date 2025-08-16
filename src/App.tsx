@@ -36,6 +36,7 @@ import TaskApplication from "@/pages/TaskApplication";
 import Rating from "@/pages/Rating";
 import Notifications from "@/pages/Notifications";
 import Portfolio from "@/pages/Portfolio";
+import SupplierTaskManagement from "@/pages/supplier/SupplierTaskManagement";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -71,6 +72,9 @@ const App = () => (
             {/* User dashboard pages */}
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/portfolio" element={<Portfolio />} />
+            
+            {/* Supplier management */}
+            <Route path="/supplier/tasks" element={<SupplierTaskManagement />} />
 
             {/* Admin */}
             <Route path="/admin" element={<AdminLayout />}>
