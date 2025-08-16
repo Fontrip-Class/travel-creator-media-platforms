@@ -31,6 +31,11 @@ import FAQ from "@/pages/FAQ";
 import SuppliersLanding from "@/pages/roles/SuppliersLanding";
 import CreatorsLanding from "@/pages/roles/CreatorsLanding";
 import MediaLanding from "@/pages/roles/MediaLanding";
+import TaskDetail from "@/pages/TaskDetail";
+import TaskApplication from "@/pages/TaskApplication";
+import Rating from "@/pages/Rating";
+import Notifications from "@/pages/Notifications";
+import Portfolio from "@/pages/Portfolio";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -57,6 +62,15 @@ const App = () => (
             <Route path="/creators/:id" element={<CreatorDetail />} />
             <Route path="/media" element={<MediaList />} />
             <Route path="/media/:id" element={<MediaDetail />} />
+
+            {/* Task related pages */}
+            <Route path="/tasks/:id" element={<TaskDetail />} />
+            <Route path="/tasks/:id/apply" element={<TaskApplication />} />
+            <Route path="/tasks/:id/rating/:type" element={<Rating />} />
+            
+            {/* User dashboard pages */}
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/portfolio" element={<Portfolio />} />
 
             {/* Admin */}
             <Route path="/admin" element={<AdminLayout />}>
