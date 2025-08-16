@@ -1,0 +1,194 @@
+<?php
+
+namespace App\Services;
+
+use Psr\Http\Message\ResponseInterface as Response;
+
+class ApiResponseService
+{
+    public function success(Response $response, $data = null, string $message = 'Success', int $statusCode = 200): Response
+    {
+        $responseData = [
+            'success' => true,
+            'message' => $message,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'data' => $data
+        ];
+
+        $response->getBody()->write(json_encode($responseData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        return $response
+            ->withStatus($statusCode)
+            ->withHeader('Content-Type', 'application/json');
+    }
+
+    public function error(Response $response, string $message, int $statusCode = 400, $errors = null): Response
+    {
+        $responseData = [
+            'success' => false,
+            'message' => $message,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'error_code' => $this->getErrorCode($statusCode)
+        ];
+
+        if ($errors !== null) {
+            $responseData['errors'] = $errors;
+        }
+
+        $response->getBody()->write(json_encode($responseData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        return $response
+            ->withStatus($statusCode)
+            ->withHeader('Content-Type', 'application/json');
+    }
+
+    public function validationError(Response $response, array $errors): Response
+    {
+        return $this->error($response, 'Validation failed', 422, $errors);
+    }
+
+    public function notFound(Response $response, string $message = 'Resource not found'): Response
+    {
+        return $this->error($response, $message, 404);
+    }
+
+    public function unauthorized(Response $response, string $message = 'Unauthorized'): Response
+    {
+        return $this->error($response, $message, 401);
+    }
+
+    public function forbidden(Response $response, string $message = 'Forbidden'): Response
+    {
+        return $this->error($response, $message, 403);
+    }
+
+    public function serverError(Response $response, string $message = 'Internal server error'): Response
+    {
+        return $this->error($response, $message, 500);
+    }
+
+    public function paginated(Response $response, array $data, array $pagination): Response
+    {
+        $responseData = [
+            'success' => true,
+            'message' => 'Data retrieved successfully',
+            'timestamp' => date('Y-m-d H:i:s'),
+            'data' => $data,
+            'pagination' => $pagination
+        ];
+
+        $response->getBody()->write(json_encode($responseData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        return $response
+            ->withStatus(200)
+            ->withHeader('Content-Type', 'application/json');
+    }
+
+    public function created(Response $response, $data = null, string $message = 'Resource created successfully'): Response
+    {
+        return $this->success($response, $data, $message, 201);
+    }
+
+    public function noContent(Response $response): Response
+    {
+        return $response->withStatus(204);
+    }
+
+    public function download(Response $response, string $filePath, string $filename): Response
+    {
+        if (!file_exists($filePath)) {
+            return $this->notFound($response, 'File not found');
+        }
+
+        $fileSize = filesize($filePath);
+        $mimeType = mime_content_type($filePath);
+
+        $response = $response
+            ->withHeader('Content-Type', $mimeType)
+            ->withHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->withHeader('Content-Length', $fileSize)
+            ->withHeader('Cache-Control', 'no-cache, must-revalidate')
+            ->withHeader('Pragma', 'no-cache');
+
+        $response->getBody()->write(file_get_contents($filePath));
+        return $response;
+    }
+
+    public function stream(Response $response, $data, callable $callback = null): Response
+    {
+        $response = $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withHeader('Cache-Control', 'no-cache')
+            ->withHeader('Connection', 'keep-alive');
+
+        if ($callback) {
+            $callback($response, $data);
+        } else {
+            $response->getBody()->write(json_encode($data));
+        }
+
+        return $response;
+    }
+
+    private function getErrorCode(int $statusCode): string
+    {
+        $errorCodes = [
+            400 => 'BAD_REQUEST',
+            401 => 'UNAUTHORIZED',
+            403 => 'FORBIDDEN',
+            404 => 'NOT_FOUND',
+            405 => 'METHOD_NOT_ALLOWED',
+            409 => 'CONFLICT',
+            422 => 'VALIDATION_ERROR',
+            429 => 'TOO_MANY_REQUESTS',
+            500 => 'INTERNAL_SERVER_ERROR',
+            502 => 'BAD_GATEWAY',
+            503 => 'SERVICE_UNAVAILABLE'
+        ];
+
+        return $errorCodes[$statusCode] ?? 'UNKNOWN_ERROR';
+    }
+
+    public function handleException(Response $response, \Throwable $exception): Response
+    {
+        $statusCode = 500;
+        $message = 'Internal server error';
+
+        // 根據異常類型設置狀態碼
+        if ($exception instanceof \InvalidArgumentException) {
+            $statusCode = 400;
+            $message = $exception->getMessage();
+        } elseif ($exception instanceof \DomainException) {
+            $statusCode = 422;
+            $message = $exception->getMessage();
+        } elseif ($exception instanceof \RuntimeException) {
+            $statusCode = 500;
+            $message = $exception->getMessage();
+        }
+
+        // 記錄錯誤日誌
+        error_log("API Error: " . $exception->getMessage() . " in " . $exception->getFile() . ":" . $exception->getLine());
+
+        return $this->error($response, $message, $statusCode);
+    }
+
+    public function rateLimitExceeded(Response $response, int $retryAfter = 60): Response
+    {
+        $response = $response
+            ->withHeader('Retry-After', $retryAfter)
+            ->withHeader('X-RateLimit-Reset', time() + $retryAfter);
+
+        return $this->error($response, 'Rate limit exceeded', 429);
+    }
+
+    public function maintenanceMode(Response $response, string $message = 'Service temporarily unavailable'): Response
+    {
+        return $response
+            ->withStatus(503)
+            ->withHeader('Content-Type', 'application/json')
+            ->withHeader('Retry-After', 300)
+            ->withBody($response->getBody()->write(json_encode([
+                'success' => false,
+                'message' => $message,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'error_code' => 'MAINTENANCE_MODE'
+            ])));
+    }
+}

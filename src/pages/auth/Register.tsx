@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,9 +8,125 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Building2, Users, Newspaper } from "lucide-react";
+import { apiService } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Register() {
   const [selectedRole, setSelectedRole] = useState<string>("");
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    phone: '',
+    agreeToTerms: false
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedRole) {
+      toast({
+        title: "錯誤",
+        description: "請選擇您的角色",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+      toast({
+        title: "錯誤",
+        description: "請填寫所有必填欄位",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "錯誤",
+        description: "密碼確認不一致",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.agreeToTerms) {
+      toast({
+        title: "錯誤",
+        description: "請同意服務條款和隱私政策",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const response = await apiService.register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        role: selectedRole,
+        phone: formData.phone || undefined
+      });
+
+      if (response.success) {
+        toast({
+          title: "註冊成功",
+          description: "歡迎加入我們的平台！",
+        });
+
+        // 如果有token，保存並導向登入頁面
+        if (response.data?.token) {
+          localStorage.setItem('auth_token', response.data.token);
+          if (response.data.user_id) {
+            localStorage.setItem('user_id', response.data.user_id);
+          }
+          if (response.data.role) {
+            localStorage.setItem('user_role', response.data.role);
+          }
+          
+          // 根據角色導向不同頁面
+          const role = response.data.role;
+          if (role === 'admin') {
+            navigate('/admin');
+          } else if (role === 'supplier') {
+            navigate('/supplier/dashboard');
+          } else if (role === 'creator') {
+            navigate('/creator/dashboard');
+          } else if (role === 'media') {
+            navigate('/media/dashboard');
+          } else {
+            navigate('/');
+          }
+        } else {
+          // 沒有token，導向登入頁面
+          navigate('/login');
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "註冊失敗",
+        description: error.message || "註冊過程中發生錯誤，請稍後再試",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const roleOptions = [
     {
@@ -55,8 +171,9 @@ export default function Register() {
               請選擇您的角色並填寫基本資料
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Role Selection */}
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Role Selection */}
             <div className="space-y-3">
               <Label className="text-base font-medium">選擇您的角色</Label>
               <div className="grid grid-cols-1 gap-3">
@@ -102,10 +219,17 @@ export default function Register() {
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="company">
+                <Label htmlFor="username">
                   {selectedRole === "creator" ? "姓名或品牌名稱" : "公司/機構名稱"}
                 </Label>
-                <Input id="company" placeholder="請輸入名稱" />
+                <Input 
+                  id="username" 
+                  name="username"
+                  placeholder="請輸入名稱" 
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contact">聯絡人姓名</Label>
@@ -116,22 +240,52 @@ export default function Register() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="example@email.com" />
+                <Input 
+                  id="email" 
+                  name="email"
+                  type="email" 
+                  placeholder="example@email.com" 
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">聯絡電話</Label>
-                <Input id="phone" placeholder="09xx-xxx-xxx" />
+                <Input 
+                  id="phone" 
+                  name="phone"
+                  placeholder="09xx-xxx-xxx" 
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="password">密碼</Label>
-                <Input id="password" type="password" placeholder="請輸入密碼" />
+                <Input 
+                  id="password" 
+                  name="password"
+                  type="password" 
+                  placeholder="請輸入密碼" 
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">確認密碼</Label>
-                <Input id="confirmPassword" type="password" placeholder="請再次輸入密碼" />
+                <Input 
+                  id="confirmPassword" 
+                  name="confirmPassword"
+                  type="password" 
+                  placeholder="請再次輸入密碼" 
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
             </div>
 
@@ -221,7 +375,14 @@ export default function Register() {
             {/* Terms and Submit */}
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
-                <Checkbox id="terms" />
+                <Checkbox 
+                  id="terms" 
+                  name="agreeToTerms"
+                  checked={formData.agreeToTerms}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({ ...prev, agreeToTerms: checked as boolean }))
+                  }
+                />
                 <Label htmlFor="terms" className="text-sm">
                   我同意{" "}
                   <Link to="/terms" className="text-primary hover:underline">
@@ -235,11 +396,12 @@ export default function Register() {
               </div>
 
               <Button 
+                type="submit"
                 className="w-full" 
                 size="lg"
-                disabled={!selectedRole}
+                disabled={!selectedRole || isLoading}
               >
-                建立帳戶
+                {isLoading ? "註冊中..." : "建立帳戶"}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
@@ -248,7 +410,7 @@ export default function Register() {
                   立即登入
                 </Link>
               </div>
-            </div>
+            </form>
           </CardContent>
         </Card>
       </div>
