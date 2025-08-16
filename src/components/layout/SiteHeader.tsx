@@ -81,6 +81,16 @@ const SiteHeader = () => {
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
+          {/* 用戶認證按鈕 */}
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/login">登入</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link to="/register">註冊</Link>
+            </Button>
+          </div>
+          
           <Button asChild variant="secondary">
             <a href="#contact" aria-label="聯絡我們">聯絡我們</a>
           </Button>
@@ -122,6 +132,16 @@ const SiteHeader = () => {
                   <NavLink to="/media" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>媒體名錄</NavLink>
                 </div>
               </div>
+              {/* 用戶認證選項 */}
+              <div className="flex flex-col gap-2">
+                <Button asChild variant="ghost" size="sm" className="w-full justify-start">
+                  <Link to="/login" onClick={() => setOpen(false)}>登入</Link>
+                </Button>
+                <Button asChild size="sm" className="w-full justify-start">
+                  <Link to="/register" onClick={() => setOpen(false)}>註冊</Link>
+                </Button>
+              </div>
+              
               <div className="flex flex-col gap-2">
                 <NavLink to="/about" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>關於我們</NavLink>
                 <NavLink to="/pricing" onClick={() => setOpen(false)} className={({ isActive }) => `text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>服務與價格</NavLink>

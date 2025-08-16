@@ -19,6 +19,14 @@ export default function Register() {
     password: '',
     confirmPassword: '',
     phone: '',
+    contact: '',
+    businessType: '',
+    region: '',
+    specialties: '',
+    followers: '',
+    platform: '',
+    mediaType: '',
+    website: '',
     agreeToTerms: false
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -80,7 +88,15 @@ export default function Register() {
         email: formData.email,
         password: formData.password,
         role: selectedRole,
-        phone: formData.phone || undefined
+        phone: formData.phone || undefined,
+        contact: formData.contact || undefined,
+        businessType: formData.businessType || undefined,
+        region: formData.region || undefined,
+        specialties: formData.specialties || undefined,
+        followers: formData.followers || undefined,
+        platform: formData.platform || undefined,
+        mediaType: formData.mediaType || undefined,
+        website: formData.website || undefined
       });
 
       if (response.success) {
@@ -233,7 +249,13 @@ export default function Register() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contact">聯絡人姓名</Label>
-                <Input id="contact" placeholder="請輸入聯絡人姓名" />
+                <Input 
+                  id="contact" 
+                  name="contact"
+                  placeholder="請輸入聯絡人姓名" 
+                  value={formData.contact || ''}
+                  onChange={handleInputChange}
+                />
               </div>
             </div>
 
@@ -294,7 +316,10 @@ export default function Register() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>業者類別</Label>
-                  <Select>
+                  <Select 
+                    value={formData.businessType || ''} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, businessType: value }))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="選擇業者類別" />
                     </SelectTrigger>
@@ -310,7 +335,13 @@ export default function Register() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="region">主要營業地區</Label>
-                  <Input id="region" placeholder="縣市/區域" />
+                  <Input 
+                    id="region" 
+                    name="region"
+                    placeholder="縣市/區域" 
+                    value={formData.region || ''}
+                    onChange={handleInputChange}
+                  />
                 </div>
               </div>
             )}
@@ -321,13 +352,19 @@ export default function Register() {
                   <Label htmlFor="specialties">專長領域（用逗號分隔）</Label>
                   <Input 
                     id="specialties" 
+                    name="specialties"
                     placeholder="例：旅遊攝影, 美食評論, 影音創作, 文字撰寫" 
+                    value={formData.specialties || ''}
+                    onChange={handleInputChange}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="followers">主要平台粉絲數</Label>
-                    <Select>
+                    <Select 
+                      value={formData.followers || ''} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, followers: value }))}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="選擇粉絲數範圍" />
                       </SelectTrigger>
@@ -342,7 +379,13 @@ export default function Register() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="platform">主要創作平台</Label>
-                    <Input id="platform" placeholder="Instagram, YouTube, 部落格等" />
+                    <Input 
+                      id="platform" 
+                      name="platform"
+                      placeholder="Instagram, YouTube, 部落格等" 
+                      value={formData.platform || ''}
+                      onChange={handleInputChange}
+                    />
                   </div>
                 </div>
               </div>
@@ -352,7 +395,10 @@ export default function Register() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>媒體類型</Label>
-                  <Select>
+                  <Select 
+                    value={formData.mediaType || ''} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, mediaType: value }))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="選擇媒體類型" />
                     </SelectTrigger>
@@ -367,7 +413,13 @@ export default function Register() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="website">官方網站</Label>
-                  <Input id="website" placeholder="https://" />
+                  <Input 
+                    id="website" 
+                    name="website"
+                    placeholder="https://" 
+                    value={formData.website || ''}
+                    onChange={handleInputChange}
+                  />
                 </div>
               </div>
             )}
@@ -410,6 +462,7 @@ export default function Register() {
                   立即登入
                 </Link>
               </div>
+            </div>
             </form>
           </CardContent>
         </Card>

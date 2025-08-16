@@ -11,96 +11,178 @@ class NotificationService
         $this->db = $db;
     }
 
-    public function createNotification(string $userId, string $type, string $title, string $message, array $data = []): string
+    public function createNotification(string $userId, string $type, string $message, array $data = []): string
     {
         $notificationData = [
             'user_id' => $userId,
             'type' => $type,
-            'title' => $title,
             'message' => $message,
             'data' => json_encode($data),
-            'is_read' => false
+            'is_read' => false,
+            'created_at' => date('Y-m-d H:i:s')
         ];
 
         return $this->db->insert('notifications', $notificationData);
     }
 
-    public function getUserNotifications(string $userId, int $limit = 20, int $offset = 0): array
+    public function getUserNotifications(string $userId, int $page = 1, int $limit = 20): array
     {
-        $sql = "SELECT * FROM notifications WHERE user_id = :user_id ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
+        $offset = ($page - 1) * $limit;
         
-        return $this->db->fetchAll($sql, [
+        $sql = "SELECT * FROM notifications 
+                WHERE user_id = :user_id 
+                ORDER BY created_at DESC 
+                LIMIT :limit OFFSET :offset";
+        
+        $notifications = $this->db->query($sql, [
             'user_id' => $userId,
             'limit' => $limit,
             'offset' => $offset
         ]);
-    }
 
-    public function markAsRead(string $notificationId): bool
-    {
-        $this->db->update('notifications', ['is_read' => true], 'id = :id', ['id' => $notificationId]);
-        return true;
-    }
+        // 獲取總數
+        $countSql = "SELECT COUNT(*) as total FROM notifications WHERE user_id = :user_id";
+        $total = $this->db->query($countSql, ['user_id' => $userId])[0]['total'] ?? 0;
 
-    public function markAllAsRead(string $userId): bool
-    {
-        $this->db->update('notifications', ['is_read' => true], 'user_id = :user_id', ['user_id' => $userId]);
-        return true;
+        return [
+            'notifications' => $notifications,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $limit,
+                'total' => $total,
+                'total_pages' => ceil($total / $limit)
+            ]
+        ];
     }
 
     public function getUnreadCount(string $userId): int
     {
-        return $this->db->count('notifications', 'user_id = :user_id AND is_read = false', ['user_id' => $userId]);
+        $sql = "SELECT COUNT(*) as count FROM notifications WHERE user_id = :user_id AND is_read = false";
+        $result = $this->db->query($sql, ['user_id' => $userId]);
+        return $result[0]['count'] ?? 0;
     }
 
-    public function deleteNotification(string $notificationId): bool
+    public function markAsRead(string $notificationId, string $userId): bool
     {
-        $this->db->delete('notifications', 'id = :id', ['id' => $notificationId]);
-        return true;
+        $sql = "UPDATE notifications SET is_read = true, read_at = NOW() 
+                WHERE id = :id AND user_id = :user_id";
+        
+        return $this->db->query($sql, [
+            'id' => $notificationId,
+            'user_id' => $userId
+        ]) !== false;
     }
 
-    // 特定類型的通知方法
-    public function notifyTaskApplication(string $supplierId, string $taskId, string $creatorName): string
+    public function markAllAsRead(string $userId): bool
     {
-        return $this->createNotification(
-            $supplierId,
-            'task_application',
-            '新的任務申請',
-            "創作者 {$creatorName} 申請了您的任務",
-            ['task_id' => $taskId, 'creator_name' => $creatorName]
-        );
+        $sql = "UPDATE notifications SET is_read = true, read_at = NOW() 
+                WHERE user_id = :user_id AND is_read = false";
+        
+        return $this->db->query($sql, ['user_id' => $userId]) !== false;
     }
 
-    public function notifyTaskAccepted(string $creatorId, string $taskId, string $taskTitle): string
+    public function deleteNotification(string $notificationId, string $userId): bool
     {
-        return $this->createNotification(
-            $creatorId,
-            'task_accepted',
-            '任務申請已接受',
-            "您的任務申請 '{$taskTitle}' 已被接受",
-            ['task_id' => $taskId, 'task_title' => $taskTitle]
-        );
+        $sql = "DELETE FROM notifications WHERE id = :id AND user_id = :user_id";
+        
+        return $this->db->query($sql, [
+            'id' => $notificationId,
+            'user_id' => $userId
+        ]) !== false;
     }
 
-    public function notifyTaskRejected(string $creatorId, string $taskId, string $taskTitle, string $reason = ''): string
+    public function deleteOldNotifications(string $userId, int $daysOld = 30): bool
     {
-        return $this->createNotification(
-            $creatorId,
-            'task_rejected',
-            '任務申請被拒絕',
-            "您的任務申請 '{$taskTitle}' 被拒絕" . ($reason ? ": {$reason}" : ''),
-            ['task_id' => $taskId, 'task_title' => $taskTitle, 'reason' => $reason]
-        );
+        $sql = "DELETE FROM notifications 
+                WHERE user_id = :user_id 
+                AND created_at < NOW() - INTERVAL :days DAY";
+        
+        return $this->db->query($sql, [
+            'user_id' => $userId,
+            'days' => $daysOld
+        ]) !== false;
     }
 
-    public function notifyNewTask(string $creatorId, string $taskId, string $taskTitle): string
+    public function createTaskNotification(string $userId, string $taskId, string $type, array $data = []): string
     {
-        return $this->createNotification(
-            $creatorId,
-            'new_task',
-            '新的任務機會',
-            "有新的任務 '{$taskTitle}' 符合您的專長",
-            ['task_id' => $taskId, 'task_title' => $taskTitle]
-        );
+        $messages = [
+            'new_application' => '有新的任務申請',
+            'application_accepted' => '您的任務申請已被接受',
+            'application_rejected' => '您的任務申請未被接受',
+            'task_completed' => '任務已完成',
+            'task_cancelled' => '任務已被取消',
+            'payment_received' => '收到任務報酬',
+            'deadline_reminder' => '任務截止日期提醒'
+        ];
+
+        $message = $messages[$type] ?? '任務相關通知';
+        
+        return $this->createNotification($userId, $type, $message, array_merge($data, ['task_id' => $taskId]));
+    }
+
+    public function createSystemNotification(string $userId, string $type, string $message, array $data = []): string
+    {
+        return $this->createNotification($userId, 'system_' . $type, $message, $data);
+    }
+
+    public function createBatchNotifications(array $userIds, string $type, string $message, array $data = []): array
+    {
+        $notificationIds = [];
+        
+        foreach ($userIds as $userId) {
+            $notificationIds[] = $this->createNotification($userId, $type, $message, $data);
+        }
+        
+        return $notificationIds;
+    }
+
+    public function getNotificationTypes(): array
+    {
+        return [
+            'task' => [
+                'new_application' => '新任務申請',
+                'application_accepted' => '申請被接受',
+                'application_rejected' => '申請被拒絕',
+                'task_completed' => '任務完成',
+                'task_cancelled' => '任務取消',
+                'payment_received' => '收到報酬',
+                'deadline_reminder' => '截止提醒'
+            ],
+            'system' => [
+                'welcome' => '歡迎通知',
+                'profile_update' => '資料更新',
+                'security_alert' => '安全提醒',
+                'maintenance' => '系統維護'
+            ],
+            'matching' => [
+                'new_task_match' => '新任務匹配',
+                'creator_suggestion' => '創作者推薦',
+                'supplier_suggestion' => '供應商推薦'
+            ]
+        ];
+    }
+
+    public function getNotificationStats(string $userId): array
+    {
+        $sql = "SELECT 
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN is_read = false THEN 1 END) as unread,
+                    COUNT(CASE WHEN type LIKE 'task%' THEN 1 END) as task_notifications,
+                    COUNT(CASE WHEN type LIKE 'system%' THEN 1 END) as system_notifications,
+                    COUNT(CASE WHEN type LIKE 'matching%' THEN 1 END) as matching_notifications
+                FROM notifications 
+                WHERE user_id = :user_id";
+        
+        $result = $this->db->query($sql, ['user_id' => $userId])[0] ?? [];
+        
+        return [
+            'total' => $result['total'] ?? 0,
+            'unread' => $result['unread'] ?? 0,
+            'by_type' => [
+                'task' => $result['task_notifications'] ?? 0,
+                'system' => $result['system_notifications'] ?? 0,
+                'matching' => $result['matching_notifications'] ?? 0
+            ]
+        ];
     }
 }

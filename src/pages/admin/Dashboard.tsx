@@ -121,4 +121,14 @@ export default function Dashboard() {
                 <div className="font-medium">系統設置</div>
                 <div className="text-sm text-muted-foreground">配置系統參數</div>
               </button>
-              <button className="p-edit_file
+              <button className="p-3 text-left border rounded-lg hover:bg-muted transition-colors">
+                <div className="font-medium">編輯檔案</div>
+                <div className="text-sm text-muted-foreground">管理系統檔案</div>
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+    </div>
+  );
+}

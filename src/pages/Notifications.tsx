@@ -1,279 +1,388 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SEO } from "@/components/SEO";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Bell, 
-  Mail, 
-  CheckCircle2, 
-  Calendar, 
-  User, 
-  Star, 
-  AlertTriangle,
-  MessageSquare,
-  Settings
-} from "lucide-react";
+import { Bell, Check, Trash2, Eye, EyeOff } from "lucide-react";
+import { apiService } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface Notification {
   id: string;
-  type: "task" | "application" | "message" | "rating" | "system";
-  title: string;
-  content: string;
-  time: string;
-  isRead: boolean;
-  isImportant?: boolean;
-  actionUrl?: string;
+  type: string;
+  message: string;
+  data: any;
+  is_read: boolean;
+  created_at: string;
+}
+
+interface NotificationStats {
+  total: number;
+  unread: number;
+  by_type: {
+    task: number;
+    system: number;
+    matching: number;
+  };
 }
 
 export default function Notifications() {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      type: "task",
-      title: "新任務媒合通知",
-      content: "有一個符合您專長的新任務「台東季節活動宣傳」，快來查看詳情！",
-      time: "2小時前",
-      isRead: false,
-      isImportant: true,
-      actionUrl: "/tasks/1"
-    },
-    {
-      id: "2",
-      type: "application",
-      title: "申請狀態更新",
-      content: "您申請的「花蓮海岸風景攝影」任務已被接受，請準備開始執行。",
-      time: "5小時前",
-      isRead: false,
-      actionUrl: "/dashboard/tasks"
-    },
-    {
-      id: "3",
-      type: "message",
-      title: "新訊息",
-      content: "台東縣政府觀光處向您發送了任務相關訊息。",
-      time: "1天前",
-      isRead: true,
-      actionUrl: "/messages/3"
-    },
-    {
-      id: "4",
-      type: "rating",
-      title: "收到新評價",
-      content: "您的合作夥伴對「南投山區美食探索」任務給了您5星評價！",
-      time: "2天前",
-      isRead: true,
-      actionUrl: "/profile/ratings"
-    },
-    {
-      id: "5",
-      type: "system",
-      title: "系統維護通知",
-      content: "平台將於本週日凌晨2:00-4:00進行系統維護，期間服務可能暫時中斷。",
-      time: "3天前",
-      isRead: true,
-      isImportant: true
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [stats, setStats] = useState<NotificationStats>({
+    total: 0,
+    unread: 0,
+    by_type: { task: 0, system: 0, matching: 0 }
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchNotifications();
+    fetchNotificationStats();
+  }, []);
+
+  const fetchNotifications = async (page = 1) => {
+    try {
+      setIsLoading(true);
+      const response = await apiService.getNotifications(page);
+      
+      if (response.success && response.data) {
+        if (page === 1) {
+          setNotifications(response.data.notifications || []);
+        } else {
+          setNotifications(prev => [...prev, ...(response.data.notifications || [])]);
+        }
+        
+        setHasMore(response.data.pagination?.current_page < response.data.pagination?.total_pages);
+        setCurrentPage(page);
+      }
+    } catch (error: any) {
+      toast({
+        title: "載入失敗",
+        description: error.message || "無法載入通知",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
+
+  const fetchNotificationStats = async () => {
+    try {
+      const response = await apiService.getNotificationStats();
+      if (response.success && response.data) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notification stats:', error);
+    }
+  };
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const response = await apiService.markNotificationAsRead(notificationId);
+      if (response.success) {
+        setNotifications(prev =>
+          prev.map(notification =>
+            notification.id === notificationId
+              ? { ...notification, is_read: true }
+              : notification
+          )
+        );
+        
+        // 更新統計
+        setStats(prev => ({
+          ...prev,
+          unread: Math.max(0, prev.unread - 1)
+        }));
+        
+        toast({
+          title: "已標記為已讀",
+          description: "通知已標記為已讀"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "操作失敗",
+        description: error.message || "無法標記通知為已讀",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      const response = await apiService.markAllNotificationsAsRead();
+      if (response.success) {
+        setNotifications(prev =>
+          prev.map(notification => ({ ...notification, is_read: true }))
+        );
+        
+        setStats(prev => ({
+          ...prev,
+          unread: 0
+        }));
+        
+        toast({
+          title: "全部標記為已讀",
+          description: "所有通知已標記為已讀"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "操作失敗",
+        description: error.message || "無法標記所有通知為已讀",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      const response = await apiService.deleteNotification(notificationId);
+      if (response.success) {
+        const deletedNotification = notifications.find(n => n.id === notificationId);
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        
+        // 更新統計
+        setStats(prev => ({
+          ...prev,
+          total: Math.max(0, prev.total - 1),
+          unread: deletedNotification?.is_read ? prev.unread : Math.max(0, prev.unread - 1)
+        }));
+        
+        toast({
+          title: "刪除成功",
+          description: "通知已刪除"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "刪除失敗",
+        description: error.message || "無法刪除通知",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "task": return <Calendar className="w-4 h-4" />;
-      case "application": return <CheckCircle2 className="w-4 h-4" />;
-      case "message": return <MessageSquare className="w-4 h-4" />;
-      case "rating": return <Star className="w-4 h-4" />;
-      case "system": return <AlertTriangle className="w-4 h-4" />;
-      default: return <Bell className="w-4 h-4" />;
+    if (type.startsWith('task')) return <Bell className="h-4 w-4" />;
+    if (type.startsWith('system')) return <Eye className="h-4 w-4" />;
+    if (type.startsWith('matching')) return <Eye className="h-4 w-4" />;
+    return <Bell className="h-4 w-4" />;
+  };
+
+  const getNotificationTypeLabel = (type: string) => {
+    if (type.startsWith('task')) return '任務';
+    if (type.startsWith('system')) return '系統';
+    if (type.startsWith('matching')) return '媒合';
+    return '其他';
+  };
+
+  const getNotificationTypeColor = (type: string) => {
+    if (type.startsWith('task')) return 'bg-blue-100 text-blue-800';
+    if (type.startsWith('system')) return 'bg-yellow-100 text-yellow-800';
+    if (type.startsWith('matching')) return 'bg-green-100 text-green-800';
+    return 'bg-gray-100 text-gray-800';
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) {
+      return '剛剛';
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)}小時前`;
+    } else if (diffInHours < 168) {
+      return `${Math.floor(diffInHours / 24)}天前`;
+    } else {
+      return date.toLocaleDateString('zh-TW');
     }
   };
 
-  const getNotificationColor = (type: string) => {
-    switch (type) {
-      case "task": return "text-blue-600";
-      case "application": return "text-green-600";
-      case "message": return "text-purple-600";
-      case "rating": return "text-yellow-600";
-      case "system": return "text-red-600";
-      default: return "text-gray-600";
+  const loadMore = () => {
+    if (!isLoading && hasMore) {
+      fetchNotifications(currentPage + 1);
     }
   };
-
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notif => ({ ...notif, isRead: true }))
-    );
-  };
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-  const unreadNotifications = notifications.filter(n => !n.isRead);
-  const readNotifications = notifications.filter(n => n.isRead);
-
-  const NotificationItem = ({ notification }: { notification: Notification }) => (
-    <div 
-      className={`p-4 border rounded-lg transition-colors cursor-pointer hover:bg-muted/50 ${
-        !notification.isRead ? "bg-blue-50 border-blue-200" : ""
-      }`}
-      onClick={() => markAsRead(notification.id)}
-    >
-      <div className="flex items-start gap-3">
-        <div className={`mt-1 ${getNotificationColor(notification.type)}`}>
-          {getNotificationIcon(notification.type)}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h4 className={`font-medium ${!notification.isRead ? "text-foreground" : "text-muted-foreground"}`}>
-              {notification.title}
-            </h4>
-            {notification.isImportant && (
-              <Badge variant="destructive" className="text-xs">重要</Badge>
-            )}
-            {!notification.isRead && (
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            )}
-          </div>
-          <p className={`text-sm mb-2 ${!notification.isRead ? "text-foreground" : "text-muted-foreground"}`}>
-            {notification.content}
-          </p>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">{notification.time}</span>
-            {notification.actionUrl && (
-              <Button size="sm" variant="outline">查看詳情</Button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <SEO 
-        title="通知中心"
-        description="查看所有通知訊息"
+    <div className="min-h-screen bg-background">
+      <SEO
+        title="通知中心 | 觀光署旅遊服務與行銷創作資源管理與媒合平台"
+        description="查看和管理您的所有通知"
       />
 
-      <div className="space-y-6">
-        {/* 標題與操作 */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Bell className="w-6 h-6" />
-            <h1 className="text-2xl font-bold">通知中心</h1>
-            {unreadCount > 0 && (
-              <Badge variant="destructive">{unreadCount} 則未讀</Badge>
-            )}
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline" size="sm">
-              <Settings className="w-4 h-4 mr-2" />
-              通知設定
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">通知中心</h1>
+          <p className="text-muted-foreground">
+            管理您的任務、系統和媒合相關通知
+          </p>
+        </div>
+
+        {/* 統計卡片 */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">總通知數</p>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                </div>
+                <Bell className="h-8 w-8 text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">未讀通知</p>
+                  <p className="text-2xl font-bold text-blue-600">{stats.unread}</p>
+                </div>
+                <EyeOff className="h-8 w-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">任務通知</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.by_type.task}</p>
+                </div>
+                <Bell className="h-8 w-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">系統通知</p>
+                  <p className="text-2xl font-bold text-yellow-600">{stats.by_type.system}</p>
+                </div>
+                <Eye className="h-8 w-8 text-yellow-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 操作按鈕 */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              onClick={markAllAsRead}
+              disabled={stats.unread === 0}
+            >
+              <Check className="h-4 w-4 mr-2" />
+              全部標記為已讀
             </Button>
-            {unreadCount > 0 && (
-              <Button size="sm" onClick={markAllAsRead}>
-                <Mail className="w-4 h-4 mr-2" />
-                全部標為已讀
-              </Button>
-            )}
           </div>
         </div>
 
         {/* 通知列表 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">訊息列表</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="all" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="all">
-                  全部 ({notifications.length})
-                </TabsTrigger>
-                <TabsTrigger value="unread">
-                  未讀 ({unreadCount})
-                </TabsTrigger>
-                <TabsTrigger value="read">
-                  已讀 ({readNotifications.length})
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="all" className="space-y-4 mt-6">
-                {notifications.length > 0 ? (
-                  notifications.map((notification) => (
-                    <NotificationItem key={notification.id} notification={notification} />
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    目前沒有通知訊息
+        <div className="space-y-4">
+          {notifications.length === 0 && !isLoading ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">暫無通知</h3>
+                <p className="text-muted-foreground">
+                  您目前沒有任何通知
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            notifications.map((notification) => (
+              <Card
+                key={notification.id}
+                className={`transition-all hover:shadow-md ${
+                  !notification.is_read ? 'border-l-4 border-l-blue-500 bg-blue-50/50' : ''
+                }`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3 flex-1">
+                      <div className={`p-2 rounded-lg ${
+                        !notification.is_read ? 'bg-blue-100' : 'bg-gray-100'
+                      }`}>
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Badge className={getNotificationTypeColor(notification.type)}>
+                            {getNotificationTypeLabel(notification.type)}
+                          </Badge>
+                          {!notification.is_read && (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                              未讀
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <p className="text-sm text-gray-900 mb-2">
+                          {notification.message}
+                        </p>
+                        
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(notification.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      {!notification.is_read && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => markAsRead(notification.id)}
+                          title="標記為已讀"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteNotification(notification.id)}
+                        title="刪除通知"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                )}
-              </TabsContent>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
 
-              <TabsContent value="unread" className="space-y-4 mt-6">
-                {unreadNotifications.length > 0 ? (
-                  unreadNotifications.map((notification) => (
-                    <NotificationItem key={notification.id} notification={notification} />
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    沒有未讀通知
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="read" className="space-y-4 mt-6">
-                {readNotifications.length > 0 ? (
-                  readNotifications.map((notification) => (
-                    <NotificationItem key={notification.id} notification={notification} />
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    沒有已讀通知
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        {/* 通知設定說明 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">通知設定</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <h4 className="font-medium">任務相關通知</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• 新任務媒合推薦</li>
-                  <li>• 申請狀態更新</li>
-                  <li>• 任務進度提醒</li>
-                </ul>
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-medium">互動通知</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• 新訊息提醒</li>
-                  <li>• 評價與評分</li>
-                  <li>• 系統公告</li>
-                </ul>
-              </div>
-            </div>
-            <Separator />
-            <div className="text-sm text-muted-foreground">
-              您可以在設定中調整各類通知的接收偏好，包括郵件通知和推送通知。
-            </div>
-          </CardContent>
-        </Card>
+        {/* 載入更多 */}
+        {hasMore && (
+          <div className="text-center mt-8">
+            <Button
+              variant="outline"
+              onClick={loadMore}
+              disabled={isLoading}
+            >
+              {isLoading ? "載入中..." : "載入更多"}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

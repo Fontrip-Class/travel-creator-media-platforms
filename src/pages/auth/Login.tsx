@@ -17,7 +17,7 @@ export default function Login() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-    const { toast } = useToast();
+  const { toast } = useToast();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
