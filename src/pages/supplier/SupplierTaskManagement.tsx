@@ -5,25 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
+import { useTaskStatus } from "@/hooks/use-task-status";
 import { Eye, Edit, Trash2, RotateCcw, Pause, Play, X } from "lucide-react";
 
-const statuses = [
-  { value: "draft", label: "草稿", color: "bg-gray-500" },
-  { value: "open", label: "公開招募", color: "bg-green-500" },
-  { value: "review", label: "審核中", color: "bg-yellow-500" },
-  { value: "doing", label: "進行中", color: "bg-blue-500" },
-  { value: "done", label: "已完成", color: "bg-purple-500" },
-  { value: "cancelled", label: "已取消", color: "bg-red-500" },
-  { value: "paused", label: "暫停招募", color: "bg-orange-500" },
-  { value: "re-recruiting", label: "重新招募", color: "bg-cyan-500" },
-  { value: "expired", label: "已過期", color: "bg-gray-400" },
-  { value: "rejected", label: "申請被拒", color: "bg-pink-500" },
-];
+// Using the centralized task status hook instead of hardcoded array
 
-const mockTasks = [
+import { TaskStatus } from "@/hooks/use-task-status";
+
+const mockTasks: Array<{
+  id: string;
+  title: string;
+  status: TaskStatus;
+  budget: number;
+  applications: number;
+  deadline: string;
+  createdAt: string;
+}> = [
   {
     id: "1",
     title: "台東季節活動宣傳",
@@ -54,48 +55,18 @@ const mockTasks = [
 ];
 
 export default function SupplierTaskManagement() {
-  const getStatusColor = (status: string) => {
-    return statuses.find(s => s.value === status)?.color || "bg-gray-500";
-  };
+  const { getStatusLabel, getStatusColor, getAvailableActions, statusConfig } = useTaskStatus();
 
-  const getStatusLabel = (status: string) => {
-    return statuses.find(s => s.value === status)?.label || status;
-  };
-
-  const getAvailableActions = (status: string) => {
-    const actions = [];
-    
-    switch (status) {
-      case "draft":
-        actions.push({ type: "publish", label: "發布", icon: Play });
-        actions.push({ type: "delete", label: "刪除", icon: Trash2 });
-        break;
-      case "open":
-        actions.push({ type: "pause", label: "暫停", icon: Pause });
-        actions.push({ type: "cancel", label: "取消", icon: X });
-        break;
-      case "review":
-        actions.push({ type: "cancel", label: "取消", icon: X });
-        break;
-      case "doing":
-        actions.push({ type: "cancel", label: "取消", icon: X });
-        break;
-      case "paused":
-        actions.push({ type: "resume", label: "恢復招募", icon: Play });
-        actions.push({ type: "cancel", label: "取消", icon: X });
-        break;
-      case "cancelled":
-      case "expired":
-      case "rejected":
-        actions.push({ type: "re-recruit", label: "重新招募", icon: RotateCcw });
-        actions.push({ type: "delete", label: "刪除", icon: Trash2 });
-        break;
-      case "done":
-        actions.push({ type: "re-recruit", label: "重新招募", icon: RotateCcw });
-        break;
-    }
-    
-    return actions;
+  const getActionConfig = (actionType: string) => {
+    const actionMap = {
+      publish: { label: "發布", icon: Play },
+      pause: { label: "暫停", icon: Pause },
+      cancel: { label: "取消", icon: X },
+      resume: { label: "恢復招募", icon: Play },
+      "re-recruit": { label: "重新招募", icon: RotateCcw },
+      delete: { label: "刪除", icon: Trash2 },
+    };
+    return actionMap[actionType];
   };
 
   const handleStatusChange = (taskId: string, newStatus: string, reason?: string) => {
@@ -157,8 +128,8 @@ export default function SupplierTaskManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部狀態</SelectItem>
-                {statuses.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                {Object.entries(statusConfig).map(([value, config]) => (
+                  <SelectItem key={value} value={value}>{config.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -191,9 +162,9 @@ export default function SupplierTaskManagement() {
                   <TableRow key={task.id}>
                     <TableCell className="font-medium">{task.title}</TableCell>
                     <TableCell>
-                      <Badge className={`${getStatusColor(task.status)} text-white`}>
+                      <StatusBadge status={getStatusColor(task.status)}>
                         {getStatusLabel(task.status)}
-                      </Badge>
+                      </StatusBadge>
                     </TableCell>
                     <TableCell>NT$ {task.budget.toLocaleString()}</TableCell>
                     <TableCell>{task.applications} 個申請</TableCell>
@@ -208,13 +179,15 @@ export default function SupplierTaskManagement() {
                         </Button>
                         
                         {/* 動態顯示可用操作 */}
-                        {getAvailableActions(task.status).map((action) => {
-                          const Icon = action.icon;
+                        {getAvailableActions(task.status).map((actionType) => {
+                          const action = getActionConfig(actionType);
+                          const Icon = action?.icon;
+                          if (!action) return null;
                           return (
-                            <AlertDialog key={action.type}>
+                            <AlertDialog key={actionType}>
                               <AlertDialogTrigger asChild>
                                 <Button 
-                                  variant={action.type === 'delete' ? 'destructive' : 'outline'} 
+                                  variant={actionType === 'delete' ? 'destructive' : 'outline'} 
                                   size="sm"
                                 >
                                   <Icon className="h-4 w-4" />
@@ -225,11 +198,11 @@ export default function SupplierTaskManagement() {
                                   <AlertDialogTitle>確認{action.label}</AlertDialogTitle>
                                   <AlertDialogDescription>
                                     您確定要{action.label}任務「{task.title}」嗎？
-                                    {action.type === 'cancel' && '此操作會通知所有申請者任務已取消。'}
-                                    {action.type === 'delete' && '此操作無法復原。'}
+                                    {actionType === 'cancel' && '此操作會通知所有申請者任務已取消。'}
+                                    {actionType === 'delete' && '此操作無法復原。'}
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                {(action.type === 'cancel' || action.type === 're-recruit') && (
+                                {(actionType === 'cancel' || actionType === 're-recruit') && (
                                   <div className="space-y-2">
                                     <Label htmlFor="reason">原因說明（選填）</Label>
                                     <Textarea id="reason" placeholder="請說明原因..." />
@@ -240,7 +213,7 @@ export default function SupplierTaskManagement() {
                                   <AlertDialogAction 
                                     onClick={() => {
                                       let newStatus = task.status;
-                                      switch (action.type) {
+                                      switch (actionType) {
                                         case 'publish': newStatus = 'open'; break;
                                         case 'pause': newStatus = 'paused'; break;
                                         case 'cancel': newStatus = 'cancelled'; break;
@@ -278,7 +251,7 @@ export default function SupplierTaskManagement() {
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+              <div className="w-2 h-2 bg-destructive rounded-full"></div>
               <div className="flex-1">
                 <div className="font-medium">台南美食之旅 - 任務已取消</div>
                 <div className="text-sm text-muted-foreground">原因：預算調整，暫時取消此專案</div>
@@ -286,7 +259,7 @@ export default function SupplierTaskManagement() {
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              <div className="w-2 h-2 bg-warning rounded-full"></div>
               <div className="flex-1">
                 <div className="font-medium">台東季節活動宣傳 - 暫停招募</div>
                 <div className="text-sm text-muted-foreground">原因：需要調整任務需求</div>

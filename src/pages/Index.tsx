@@ -26,7 +26,7 @@ export default function Index() {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-secondary/40" />
         </div>
         
-        <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
+        <div className="relative z-10 text-center text-primary-foreground px-4 max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
             觀光署旅遊服務與<br />
             行銷創作資源管理與媒合平台
@@ -41,7 +41,7 @@ export default function Index() {
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
               <Input
                 placeholder="搜尋旅遊服務、創作者或媒體通路..."
-                className="pl-12 py-6 text-lg bg-white/90 backdrop-blur-sm border-0 shadow-lg"
+                className="pl-12 py-6 text-lg glass border-0 shadow-lg"
               />
               <Button size="lg" className="absolute right-2 top-1/2 transform -translate-y-1/2">
                 搜尋
@@ -51,17 +51,17 @@ export default function Index() {
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-6 border border-white/30">
-              <div className="text-3xl font-bold mb-2">1,250+</div>
-              <div className="text-lg opacity-90">KOC創作者數量</div>
+            <div className="glass rounded-lg p-6">
+              <div className="text-3xl font-bold mb-2 text-primary-foreground">1,250+</div>
+              <div className="text-lg text-primary-foreground/90">KOC創作者數量</div>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-6 border border-white/30">
-              <div className="text-3xl font-bold mb-2">8,500+</div>
-              <div className="text-lg opacity-90">創作者影音素材數量</div>
+            <div className="glass rounded-lg p-6">
+              <div className="text-3xl font-bold mb-2 text-primary-foreground">8,500+</div>
+              <div className="text-lg text-primary-foreground/90">創作者影音素材數量</div>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-6 border border-white/30">
-              <div className="text-3xl font-bold mb-2">15.2M</div>
-              <div className="text-lg opacity-90">媒體通路曝光數量</div>
+            <div className="glass rounded-lg p-6">
+              <div className="text-3xl font-bold mb-2 text-primary-foreground">15.2M</div>
+              <div className="text-lg text-primary-foreground/90">媒體通路曝光數量</div>
             </div>
           </div>
         </div>
@@ -83,7 +83,7 @@ export default function Index() {
               <div className="absolute inset-0 bg-gradient-supplier opacity-5 group-hover:opacity-10 transition-opacity" />
               <CardHeader className="relative z-10 text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-supplier rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Building2 className="w-8 h-8 text-white" />
+                  <Building2 className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <CardTitle className="text-2xl">旅遊服務供應商</CardTitle>
                 <CardDescription className="text-base">
@@ -107,7 +107,7 @@ export default function Index() {
                 </div>
                 <div className="pt-4">
                   <Link to="/login">
-                    <Button className="w-full bg-gradient-supplier hover:opacity-90 text-white border-0">
+                    <Button className="w-full bg-gradient-supplier hover:opacity-90 text-primary-foreground border-0">
                       供應商登入
                     </Button>
                   </Link>
@@ -120,7 +120,7 @@ export default function Index() {
               <div className="absolute inset-0 bg-gradient-creator opacity-5 group-hover:opacity-10 transition-opacity" />
               <CardHeader className="relative z-10 text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-creator rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-white" />
+                  <Users className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <CardTitle className="text-2xl">創作者 / KOC</CardTitle>
                 <CardDescription className="text-base">
@@ -144,7 +144,7 @@ export default function Index() {
                 </div>
                 <div className="pt-4">
                   <Link to="/login">
-                    <Button className="w-full bg-gradient-creator hover:opacity-90 text-white border-0">
+                    <Button className="w-full bg-gradient-creator hover:opacity-90 text-primary-foreground border-0">
                       創作者登入
                     </Button>
                   </Link>
@@ -157,7 +157,7 @@ export default function Index() {
               <div className="absolute inset-0 bg-gradient-media opacity-5 group-hover:opacity-10 transition-opacity" />
               <CardHeader className="relative z-10 text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-media rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Newspaper className="w-8 h-8 text-white" />
+                  <Newspaper className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <CardTitle className="text-2xl">媒體通路</CardTitle>
                 <CardDescription className="text-base">
@@ -181,7 +181,7 @@ export default function Index() {
                 </div>
                 <div className="pt-4">
                   <Link to="/login">
-                    <Button className="w-full bg-gradient-media hover:opacity-90 text-white border-0">
+                    <Button className="w-full bg-gradient-media hover:opacity-90 text-primary-foreground border-0">
                       媒體登入
                     </Button>
                   </Link>
@@ -319,12 +319,12 @@ export default function Index() {
                 <div className="aspect-video bg-muted rounded-t-lg relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
                     {asset.type === "圖片" ? (
-                      <Camera size={32} className="text-white" />
+                      <Camera size={32} className="text-primary-foreground" />
                     ) : (
-                      <FileText size={32} className="text-white" />
+                      <FileText size={32} className="text-primary-foreground" />
                     )}
                   </div>
-                  <Badge className="absolute top-2 right-2 bg-black/50 text-white">
+                  <Badge className="absolute top-2 right-2 bg-primary/50 text-primary-foreground">
                     {asset.type}
                   </Badge>
                 </div>
@@ -373,21 +373,21 @@ export default function Index() {
 
       {/* CTA Section */}
       <section className="py-20 px-4 bg-hero">
-        <div className="max-w-4xl mx-auto text-center text-white">
+        <div className="max-w-4xl mx-auto text-center text-primary-foreground">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             立即加入台灣旅遊行銷生態圈
           </h2>
-          <p className="text-xl mb-8 opacity-90">
+          <p className="text-xl mb-8 text-primary-foreground/90">
             無論您是旅遊業者、創作者或媒體，都能在這裡找到最佳的合作夥伴
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/register">
-              <Button size="lg" className="bg-white text-primary hover:bg-white/90">
+              <Button size="lg" className="bg-card text-primary hover:bg-card/90">
                 立即註冊
               </Button>
             </Link>
             <Link to="/about">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10">
                 了解更多
               </Button>
             </Link>

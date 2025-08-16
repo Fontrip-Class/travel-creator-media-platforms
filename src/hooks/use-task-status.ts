@@ -1,14 +1,14 @@
 export const taskStatusConfig = {
-  draft: { label: "草稿", color: "draft" },
-  open: { label: "公開招募", color: "open" },
-  review: { label: "審核中", color: "review" },
-  doing: { label: "進行中", color: "doing" },
-  done: { label: "已完成", color: "done" },
-  cancelled: { label: "已取消", color: "cancelled" },
-  paused: { label: "暫停招募", color: "paused" },
-  "re-recruiting": { label: "重新招募", color: "re-recruiting" },
-  expired: { label: "已過期", color: "expired" },
-  rejected: { label: "申請被拒", color: "rejected" },
+  draft: { label: "草稿", color: "draft" as const },
+  open: { label: "公開招募", color: "open" as const },
+  review: { label: "審核中", color: "review" as const },
+  doing: { label: "進行中", color: "doing" as const },
+  done: { label: "已完成", color: "done" as const },
+  cancelled: { label: "已取消", color: "cancelled" as const },
+  paused: { label: "暫停招募", color: "paused" as const },
+  "re-recruiting": { label: "重新招募", color: "re-recruiting" as const },
+  expired: { label: "已過期", color: "expired" as const },
+  rejected: { label: "申請被拒", color: "rejected" as const },
 } as const;
 
 export type TaskStatus = keyof typeof taskStatusConfig;
