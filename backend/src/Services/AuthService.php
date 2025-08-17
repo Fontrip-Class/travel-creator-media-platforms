@@ -234,40 +234,54 @@ class AuthService
 
     private function validateRegistrationData(array $data): void
     {
-        $validator = v::key('username', v::stringType()->length(3, 50)->alnum('_'))
-                     ->key('email', v::email())
-                     ->key('password', v::stringType()->length(8, 255))
-                     ->key('role', v::in(['supplier', 'creator', 'media']))
-                     ->key('first_name', v::optional(v::stringType()->length(1, 50)))
-                     ->key('last_name', v::optional(v::stringType()->length(1, 50)));
-
-        try {
-            $validator->assert($data);
-        } catch (\Exception $e) {
-            throw new \Exception('Validation failed: ' . $e->getMessage());
+        // 使用更簡單的驗證邏輯，避免 Respect\Validation 的複雜性
+        $errors = [];
+        
+        // 用戶名驗證
+        if (empty($data['username']) || !is_string($data['username'])) {
+            $errors[] = '用戶名不能為空且必須是字符串';
+        } elseif (mb_strlen($data['username']) < 3 || mb_strlen($data['username']) > 50) {
+            $errors[] = '用戶名長度必須在3-50字符之間';
+        } elseif (!preg_match('/^[\p{Han}a-zA-Z0-9_\s]+$/u', $data['username'])) {
+            $errors[] = '用戶名格式不正確：只能包含中文、英文字母、數字、底線和空格';
+        }
+        
+        // 郵箱驗證
+        if (empty($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors[] = '郵箱格式不正確';
+        }
+        
+        // 密碼驗證
+        if (empty($data['password']) || !is_string($data['password'])) {
+            $errors[] = '密碼不能為空且必須是字符串';
+        } elseif (strlen($data['password']) < 6 || strlen($data['password']) > 255) {
+            $errors[] = '密碼長度必須在6-255字符之間';
+        }
+        
+        // 角色驗證
+        $validRoles = ['supplier', 'creator', 'media'];
+        if (empty($data['role']) || !in_array($data['role'], $validRoles)) {
+            $errors[] = '角色必須是以下之一：' . implode(', ', $validRoles);
+        }
+        
+        // 如果有錯誤，拋出異常
+        if (!empty($errors)) {
+            throw new \Exception('資料驗證失敗：' . implode('; ', $errors));
         }
     }
 
     private function validatePasswordStrength(string $password): void
     {
-        if (strlen($password) < 8) {
-            throw new \Exception('Password must be at least 8 characters long');
+        if (strlen($password) < 6) {
+            throw new \Exception('密碼長度至少需要6個字符');
         }
 
-        if (!preg_match('/[A-Z]/', $password)) {
-            throw new \Exception('Password must contain at least one uppercase letter');
-        }
-
-        if (!preg_match('/[a-z]/', $password)) {
-            throw new \Exception('Password must contain at least one lowercase letter');
-        }
-
-        if (!preg_match('/[0-9]/', $password)) {
-            throw new \Exception('Password must contain at least one number');
-        }
-
-        if (!preg_match('/[^A-Za-z0-9]/', $password)) {
-            throw new \Exception('Password must contain at least one special character');
+        // 簡化密碼強度要求：至少包含數字和字母
+        $hasLetter = preg_match('/[a-zA-Z]/', $password);
+        $hasNumber = preg_match('/[0-9]/', $password);
+        
+        if (!$hasLetter || !$hasNumber) {
+            throw new \Exception('密碼必須至少包含字母和數字');
         }
     }
 
@@ -315,7 +329,7 @@ class AuthService
     private function updateLastLogin(string $userId): void
     {
         $this->db->update('users', [
-            'last_login' => date('Y-m-d H:i:s')
+            'last_login_at' => date('Y-m-d H:i:s')
         ], 'id = :id', ['id' => $userId]);
     }
 
@@ -344,8 +358,9 @@ class AuthService
                 break;
 
             case 'creator':
-                $profileData['portfolio_url'] = $data['portfolio_url'] ?? null;
-                $profileData['content_types'] = $data['content_types'] ?? [];
+                $profileData['specialties'] = $data['specialties'] ?? null;
+                $profileData['followers_count'] = $data['followers'] ?? 0;
+                $profileData['platform'] = $data['platform'] ?? null;
                 $this->db->insert('creator_profiles', $profileData);
                 break;
 

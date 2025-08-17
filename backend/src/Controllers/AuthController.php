@@ -24,9 +24,7 @@ class AuthController
         try {
             $data = $request->getParsedBody();
             
-            // 驗證註冊資料
-            $this->validateRegistrationData($data);
-            
+            // 註冊資料驗證由AuthService處理
             $result = $this->authService->register($data);
             
             return $this->apiResponse->created($response, $result, '用戶註冊成功');

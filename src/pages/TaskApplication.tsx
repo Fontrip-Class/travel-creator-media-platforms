@@ -11,10 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Upload, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { apiService } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function TaskApplication() {
-  const { id } = useParams();
+  const { id: taskId } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     proposal: "",
     experience: "",
@@ -33,12 +37,57 @@ export default function TaskApplication() {
     deadline: "2024-12-31"
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 這裡會連接到後端API提交申請
-    console.log("提交申請:", formData);
-    // 模擬提交成功
-    navigate("/dashboard/applications");
+    
+    if (!formData.proposal || !formData.experience) {
+      toast({
+        title: "錯誤",
+        description: "請填寫所有必填欄位",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // 準備API數據，確保與後端規格一致
+      const apiData = {
+        proposal: formData.proposal,
+        proposed_budget: formData.budget ? parseFloat(formData.budget) : undefined,
+        estimated_duration: formData.timeline,
+        portfolio_samples: formData.portfolio.map(file => ({
+          name: file.name,
+          type: file.type,
+          size: file.size
+        }))
+      };
+
+      // 調用API提交申請
+      const response = await apiService.submitApplication(taskId, apiData);
+      
+      if (response.success) {
+        toast({
+          title: "申請成功",
+          description: "您的申請已成功提交，供應商會盡快審核！",
+        });
+        
+        // 導航到申請列表頁面
+        navigate("/dashboard/applications");
+      } else {
+        throw new Error(response.message || "申請失敗");
+      }
+    } catch (error: any) {
+      // 保留用戶填寫的數據，顯示詳細錯誤訊息
+      toast({
+        title: "申請失敗",
+        description: error.message || "申請過程中發生錯誤，請稍後重試",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,6 +147,9 @@ export default function TaskApplication() {
                   className="min-h-[120px]"
                   required
                 />
+                <p className="text-xs text-gray-500">
+                  提案說明長度：10-2000字符，請詳細說明您的創作理念和執行方式
+                </p>
               </div>
 
               {/* 相關經驗 */}

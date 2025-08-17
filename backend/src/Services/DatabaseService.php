@@ -48,18 +48,51 @@ class DatabaseService
         $attempt = 0;
         while ($attempt < $this->maxRetries) {
             try {
-                $dsn = "pgsql:host={$this->config['host']};port={$this->config['port']};dbname={$this->config['database']};charset={$this->config['charset']}";
+                $driver = $this->config['driver'] ?? 'sqlite';
                 
-                $this->pdo = new PDO($dsn, $this->config['username'], $this->config['password'], $this->config['options']);
+                switch ($driver) {
+                    case 'sqlite':
+                        $dsn = "sqlite:{$this->config['database']}";
+                        $this->pdo = new PDO($dsn, null, null, $this->config['options'] ?? []);
+                        break;
+                        
+                    case 'mysql':
+                        $host = $this->config['mysql']['host'] ?? 'localhost';
+                        $port = $this->config['mysql']['port'] ?? '3306';
+                        $database = $this->config['mysql']['database'] ?? 'travel_platform';
+                        $username = $this->config['mysql']['username'] ?? 'root';
+                        $password = $this->config['mysql']['password'] ?? '';
+                        $charset = $this->config['mysql']['charset'] ?? 'utf8mb4';
+                        
+                        $dsn = "mysql:host={$host};port={$port};dbname={$database};charset={$charset}";
+                        $this->pdo = new PDO($dsn, $username, $password, $this->config['mysql']['options'] ?? []);
+                        break;
+                        
+                    case 'pgsql':
+                        $host = $this->config['pgsql']['host'] ?? 'localhost';
+                        $port = $this->config['pgsql']['port'] ?? '5432';
+                        $database = $this->config['pgsql']['database'] ?? 'travel_platform';
+                        $username = $this->config['pgsql']['username'] ?? 'postgres';
+                        $password = $this->config['pgsql']['password'] ?? '';
+                        $charset = $this->config['pgsql']['charset'] ?? 'utf8';
+                        
+                        $dsn = "pgsql:host={$host};port={$port};dbname={$database};charset={$charset}";
+                        $this->pdo = new PDO($dsn, $username, $password, $this->config['pgsql']['options'] ?? []);
+                        
+                        // 設置PostgreSQL特定選項
+                        $this->pdo->exec("SET timezone = 'UTC'");
+                        $this->pdo->exec("SET client_encoding = 'UTF8'");
+                        break;
+                        
+                    default:
+                        throw new PDOException("Unsupported database driver: {$driver}");
+                }
+                
                 $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
                 $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
                 
-                // 設置PostgreSQL特定選項
-                $this->pdo->exec("SET timezone = 'UTC'");
-                $this->pdo->exec("SET client_encoding = 'UTF8'");
-                
-                $this->logger->info('Database connection established successfully');
+                $this->logger->info("Database connection established successfully using {$driver}");
                 return;
                 
             } catch (PDOException $e) {
@@ -171,12 +204,19 @@ class DatabaseService
         $columns = implode(', ', array_keys($data));
         $placeholders = ':' . implode(', :', array_keys($data));
         
-        $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders}) RETURNING id";
+        $driver = $this->config['driver'] ?? 'sqlite';
         
-        $stmt = $this->query($sql, $data);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        return $result['id'];
+        if ($driver === 'sqlite') {
+            $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders})";
+            $this->query($sql, $data);
+            return $this->pdo->lastInsertId();
+        } else {
+            // PostgreSQL 和 MySQL 使用 RETURNING
+            $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders}) RETURNING id";
+            $stmt = $this->query($sql, $data);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result['id'];
+        }
     }
 
     public function insertBatch(string $table, array $rows): array
@@ -189,15 +229,23 @@ class DatabaseService
         $placeholders = '(' . implode(', ', array_fill(0, count($columns), '?')) . ')';
         $values = array_fill(0, count($rows), $placeholders);
         
-        $sql = "INSERT INTO {$table} (" . implode(', ', $columns) . ") VALUES " . implode(', ', $values) . " RETURNING id";
+        $driver = $this->config['driver'] ?? 'sqlite';
         
         $params = [];
         foreach ($rows as $row) {
             $params = array_merge($params, array_values($row));
         }
         
-        $stmt = $this->query($sql, $params);
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        if ($driver === 'sqlite') {
+            $sql = "INSERT INTO {$table} (" . implode(', ', $columns) . ") VALUES " . implode(', ', $values);
+            $this->query($sql, $params);
+            return [$this->pdo->lastInsertId()];
+        } else {
+            // PostgreSQL 和 MySQL 使用 RETURNING
+            $sql = "INSERT INTO {$table} (" . implode(', ', $columns) . ") VALUES " . implode(', ', $values) . " RETURNING id";
+            $stmt = $this->query($sql, $params);
+            return $stmt->fetchAll(PDO::FETCH_COLUMN);
+        }
     }
 
     public function update(string $table, array $data, string $where, array $whereParams = []): int

@@ -26,18 +26,29 @@ import AssetsAdmin from "@/pages/admin/Assets";
 import PermissionsAdmin from "@/pages/admin/Permissions";
 import Register from "@/pages/auth/Register";
 import Login from "@/pages/auth/Login";
-import About from "@/pages/About";
-import Pricing from "@/pages/Pricing";
-import FAQ from "@/pages/FAQ";
-import SuppliersLanding from "@/pages/roles/SuppliersLanding";
-import CreatorsLanding from "@/pages/roles/CreatorsLanding";
-import MediaLanding from "@/pages/roles/MediaLanding";
-import TaskDetail from "@/pages/TaskDetail";
-import TaskApplication from "@/pages/TaskApplication";
-import Rating from "@/pages/Rating";
-import Notifications from "@/pages/Notifications";
-import Portfolio from "@/pages/Portfolio";
-import SupplierTaskManagement from "@/pages/supplier/SupplierTaskManagement";
+import About from "./pages/About";
+import Pricing from "./pages/Pricing";
+import FAQ from "./pages/FAQ";
+import SuppliersLanding from "./pages/roles/SuppliersLanding";
+import CreatorsLanding from "./pages/roles/CreatorsLanding";
+import MediaLanding from "./pages/roles/MediaLanding";
+import TaskDetail from "./pages/TaskDetail";
+import TaskApplication from "./pages/TaskApplication";
+import Rating from "./pages/Rating";
+import Notifications from "./pages/Notifications";
+import Portfolio from "./pages/Portfolio";
+import SupplierTaskManagement from "./pages/supplier/SupplierTaskManagement";
+import CreateTask from "./pages/supplier/CreateTask";
+import EditTask from "./pages/supplier/EditTask";
+import RoleSelection from "./pages/RoleSelection";
+import SupplierDashboard from "./pages/supplier/SupplierDashboard";
+import CreatorDashboard from "./pages/creator/CreatorDashboard";
+import CreatorTasks from "./pages/creator/CreatorTasks";
+import CreatorPortfolio from "./pages/creator/CreatorPortfolio";
+import MediaDashboard from "./pages/media/MediaDashboard";
+import MediaAssets from "./pages/media/MediaAssets";
+import BusinessEntityManagement from "./pages/BusinessEntityManagement";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -54,10 +65,15 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/faq" element={<FAQ />} />
+            
+            {/* 角色選擇頁面 */}
+            <Route path="/role-selection" element={<RoleSelection />} />
+            
             {/* Role landing pages */}
             <Route path="/for-suppliers" element={<SuppliersLanding />} />
             <Route path="/for-creators" element={<CreatorsLanding />} />
             <Route path="/for-media" element={<MediaLanding />} />
+            
             {/* Directories */}
             <Route path="/suppliers" element={<SuppliersList />} />
             <Route path="/suppliers/:id" element={<SupplierDetail />} />
@@ -74,9 +90,22 @@ const App = () => (
             {/* User dashboard pages */}
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/business-entities" element={<BusinessEntityManagement />} />
             
             {/* Supplier management */}
             <Route path="/supplier/tasks" element={<SupplierTaskManagement />} />
+            <Route path="/supplier/dashboard" element={<SupplierDashboard />} />
+            <Route path="/supplier/create-task" element={<CreateTask />} />
+            <Route path="/supplier/edit-task/:id" element={<EditTask />} />
+
+            {/* Creator management */}
+            <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+            <Route path="/creator/tasks" element={<CreatorTasks />} />
+            <Route path="/creator/portfolio" element={<CreatorPortfolio />} />
+
+            {/* Media management */}
+            <Route path="/media/dashboard" element={<MediaDashboard />} />
+            <Route path="/media/assets" element={<MediaAssets />} />
 
             {/* Admin */}
             <Route path="/admin" element={<AdminLayout />}>

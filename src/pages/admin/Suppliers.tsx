@@ -28,6 +28,7 @@ export default function SuppliersAdmin() {
                 <SelectItem value="景點">景點</SelectItem>
                 <SelectItem value="活動">活動</SelectItem>
                 <SelectItem value="交通">交通</SelectItem>
+                <SelectItem value="其他">其他</SelectItem>
               </SelectContent>
             </Select>
             <Button>搜尋</Button>
@@ -76,6 +77,7 @@ export default function SuppliersAdmin() {
                 <SelectItem value="景點">景點</SelectItem>
                 <SelectItem value="活動">活動</SelectItem>
                 <SelectItem value="交通">交通</SelectItem>
+                <SelectItem value="其他">其他</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -74,11 +74,11 @@ export default function TasksAdmin() {
     try {
       const response = await apiService.createTask({
         title: formData.title,
-        status: formData.status,
         description: formData.description,
-        reward: formData.reward ? parseFloat(formData.reward) : undefined,
+        budget_min: formData.reward ? parseFloat(formData.reward) : undefined,
+        budget_max: formData.reward ? parseFloat(formData.reward) : undefined,
         deadline: formData.deadline || undefined,
-        content_types: formData.contentTypes ? formData.contentTypes.split(',').map(t => t.trim()) : []
+        content_type: formData.contentTypes ? formData.contentTypes.split(',')[0].trim() : undefined
       });
 
       if (response.success) {
@@ -98,6 +98,7 @@ export default function TasksAdmin() {
         });
       }
     } catch (error: any) {
+      // 保留用戶填寫的數據，只顯示錯誤訊息
       toast({
         title: "創建失敗",
         description: error.message || "任務創建過程中發生錯誤",

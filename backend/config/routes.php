@@ -39,12 +39,33 @@ return function (App $app) {
             $group->get('/recommendations', [TaskController::class, 'getTaskRecommendations']);
             $group->get('', [TaskController::class, 'getTasks']);
             $group->post('', [TaskController::class, 'createTask']);
+            
+            // 草稿相關路由
+            $group->group('/drafts', function (RouteCollectorProxy $group) {
+                $group->get('', [TaskController::class, 'getTaskDrafts']);
+                $group->post('', [TaskController::class, 'saveTaskDraft']);
+                $group->get('/{id}', [TaskController::class, 'getTaskDraft']);
+                $group->put('/{id}', [TaskController::class, 'updateTaskDraft']);
+                $group->delete('/{id}', [TaskController::class, 'deleteTaskDraft']);
+                $group->post('/{id}/publish', [TaskController::class, 'publishTaskDraft']);
+            });
+            
             // 變數路由放在最後
             $group->get('/{id}', [TaskController::class, 'getTaskById']);
             $group->put('/{id}', [TaskController::class, 'updateTask']);
             $group->delete('/{id}', [TaskController::class, 'deleteTask']);
             $group->post('/{id}/apply', [TaskController::class, 'applyForTask']);
             $group->post('/{id}/rate', [TaskController::class, 'rateTask']);
+            
+            // 申請相關路由
+            $group->group('/{id}/applications', function (RouteCollectorProxy $group) {
+                $group->get('', [TaskController::class, 'getTaskApplications']);
+            });
+            
+            // 評分相關路由
+            $group->group('/{id}/ratings', function (RouteCollectorProxy $group) {
+                $group->get('', [TaskController::class, 'getTaskRatings']);
+            });
         });
     });
 
@@ -55,6 +76,11 @@ return function (App $app) {
             $group->get('/profile', [AuthController::class, 'getProfile']);
             $group->put('/profile', [AuthController::class, 'updateProfile']);
             $group->get('/{id}', [AuthController::class, 'getUserById']);
+            
+            // 用戶評分
+            $group->group('/{id}/ratings', function (RouteCollectorProxy $group) {
+                $group->get('', [TaskController::class, 'getUserRatings']);
+            });
         });
         
         // 統計和報表
@@ -100,6 +126,11 @@ return function (App $app) {
         $group->group('/settings', function (RouteCollectorProxy $group) {
             $group->get('', [AuthController::class, 'getUserSettings']);
             $group->put('', [AuthController::class, 'updateUserSettings']);
+        });
+        
+        // 申請管理
+        $group->group('/applications', function (RouteCollectorProxy $group) {
+            $group->put('/{id}', [TaskController::class, 'updateApplication']);
         });
         
     })->add(AuthMiddleware::class);

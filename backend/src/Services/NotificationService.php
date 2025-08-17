@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Services\DatabaseService;
+
 class NotificationService
 {
     private DatabaseService $db;
@@ -11,178 +13,333 @@ class NotificationService
         $this->db = $db;
     }
 
-    public function createNotification(string $userId, string $type, string $message, array $data = []): string
+    /**
+     * 通知創作者有新任務
+     */
+    public function notifyCreatorsForNewTask(array $task): void
     {
-        $notificationData = [
-            'user_id' => $userId,
-            'type' => $type,
-            'message' => $message,
-            'data' => json_encode($data),
-            'is_read' => false,
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-
-        return $this->db->insert('notifications', $notificationData);
+        try {
+            // 獲取符合條件的創作者
+            $creators = $this->getEligibleCreators($task);
+            
+            foreach ($creators as $creator) {
+                $this->createNotification([
+                    'user_id' => $creator['id'],
+                    'type' => 'new_task_available',
+                    'title' => '新任務發布',
+                    'message' => "有新的任務「{$task['title']}」符合您的專長領域，立即查看並提交提案！",
+                    'data' => [
+                        'task_id' => $task['id'],
+                        'task_title' => $task['title'],
+                        'budget' => $task['budget'],
+                        'deadline' => $task['deadline']
+                    ],
+                    'priority' => 'high',
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+            }
+        } catch (\Exception $e) {
+            // 記錄錯誤但不中斷流程
+            error_log("通知創作者失敗: " . $e->getMessage());
+        }
     }
 
-    public function getUserNotifications(string $userId, int $page = 1, int $limit = 20): array
+    /**
+     * 通知供應商有提案需要評估
+     */
+    public function notifySupplierForProposals(array $task): void
     {
-        $offset = ($page - 1) * $limit;
+        try {
+            $this->createNotification([
+                'user_id' => $task['supplier_id'],
+                'type' => 'proposals_ready_for_review',
+                'title' => '提案待評估',
+                'message' => "任務「{$task['title']}」已收到多個創作者提案，請及時評估選擇。",
+                'data' => [
+                    'task_id' => $task['id'],
+                    'task_title' => $task['title'],
+                    'proposal_count' => $this->getProposalCount($task['id'])
+                ],
+                'priority' => 'medium',
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+        } catch (\Exception $e) {
+            error_log("通知供應商失敗: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * 通知選中的創作者開始創作
+     */
+    public function notifyCreatorToStartWork(array $task): void
+    {
+        try {
+            // 獲取選中的創作者
+            $selectedCreator = $this->getSelectedCreator($task['id']);
+            
+            if ($selectedCreator) {
+                $this->createNotification([
+                    'user_id' => $selectedCreator['creator_id'],
+                    'type' => 'proposal_selected',
+                    'title' => '提案被選中',
+                    'message' => "恭喜！您的提案「{$task['title']}」已被選中，請立即開始創作。",
+                    'data' => [
+                        'task_id' => $task['id'],
+                        'task_title' => $task['title'],
+                        'deadline' => $task['deadline'],
+                        'budget' => $task['budget']
+                    ],
+                    'priority' => 'high',
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+            }
+        } catch (\Exception $e) {
+            error_log("通知創作者開始創作失敗: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * 通知供應商審核內容
+     */
+    public function notifySupplierForReview(array $task): void
+    {
+        try {
+            $this->createNotification([
+                'user_id' => $task['supplier_id'],
+                'type' => 'content_ready_for_review',
+                'title' => '內容待審核',
+                'message' => "任務「{$task['title']}」的內容創作已完成，請在3日內審核，逾期將自動通過。",
+                'data' => [
+                    'task_id' => $task['id'],
+                    'task_title' => $task['title'],
+                    'deadline' => date('Y-m-d', strtotime('+3 days')),
+                    'auto_approve' => true
+                ],
+                'priority' => 'high',
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+        } catch (\Exception $e) {
+            error_log("通知供應商審核失敗: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * 通知媒體通路準備發布
+     */
+    public function notifyMediaForPublishing(array $task): void
+    {
+        try {
+            // 獲取所有媒體通路用戶
+            $mediaUsers = $this->getMediaUsers();
+            
+            foreach ($mediaUsers as $mediaUser) {
+                $this->createNotification([
+                    'user_id' => $mediaUser['id'],
+                    'type' => 'content_ready_for_publishing',
+                    'title' => '內容可發布',
+                    'message' => "新內容「{$task['title']}」已通過審核，可下載素材進行發布。",
+                    'data' => [
+                        'task_id' => $task['id'],
+                        'task_title' => $task['title'],
+                        'content_type' => $task['content_type'] ?? 'mixed',
+                        'available_assets' => $this->getAvailableAssets($task['id'])
+                    ],
+                    'priority' => 'medium',
+                    'created_at' => date('Y-m-d H:i:s')
+                ]);
+            }
+        } catch (\Exception $e) {
+            error_log("通知媒體通路失敗: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * 創建通知記錄
+     */
+    private function createNotification(array $data): void
+    {
+        try {
+            $this->db->insert('notifications', $data);
+        } catch (\Exception $e) {
+            error_log("創建通知記錄失敗: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * 獲取符合條件的創作者
+     */
+    private function getEligibleCreators(array $task): array
+    {
+        // 這裡應該實現基於任務需求和創作者專長的匹配算法
+        // 暫時返回所有創作者
+        return $this->db->fetchAll(
+            'SELECT id FROM users WHERE role = "creator" AND status = "active"'
+        );
+    }
+
+    /**
+     * 獲取提案數量
+     */
+    private function getProposalCount(string $taskId): int
+    {
+        $result = $this->db->fetchOne(
+            'SELECT COUNT(*) as count FROM task_applications WHERE task_id = :task_id',
+            ['task_id' => $taskId]
+        );
         
-        $sql = "SELECT * FROM notifications 
-                WHERE user_id = :user_id 
-                ORDER BY created_at DESC 
-                LIMIT :limit OFFSET :offset";
-        
-        $notifications = $this->db->query($sql, [
-            'user_id' => $userId,
-            'limit' => $limit,
-            'offset' => $offset
-        ]);
-
-        // 獲取總數
-        $countSql = "SELECT COUNT(*) as total FROM notifications WHERE user_id = :user_id";
-        $total = $this->db->query($countSql, ['user_id' => $userId])[0]['total'] ?? 0;
-
-        return [
-            'notifications' => $notifications,
-            'pagination' => [
-                'current_page' => $page,
-                'per_page' => $limit,
-                'total' => $total,
-                'total_pages' => ceil($total / $limit)
-            ]
-        ];
+        return $result['count'] ?? 0;
     }
 
-    public function getUnreadCount(string $userId): int
+    /**
+     * 獲取選中的創作者
+     */
+    private function getSelectedCreator(string $taskId): ?array
     {
-        $sql = "SELECT COUNT(*) as count FROM notifications WHERE user_id = :user_id AND is_read = false";
-        $result = $this->db->query($sql, ['user_id' => $userId]);
-        return $result[0]['count'] ?? 0;
+        return $this->db->fetchOne(
+            'SELECT creator_id FROM task_applications WHERE task_id = :task_id AND status = "selected"',
+            ['task_id' => $taskId]
+        );
     }
 
+    /**
+     * 獲取媒體通路用戶
+     */
+    private function getMediaUsers(): array
+    {
+        return $this->db->fetchAll(
+            'SELECT id FROM users WHERE role = "media" AND status = "active"'
+        );
+    }
+
+    /**
+     * 獲取可用素材
+     */
+    private function getAvailableAssets(string $taskId): array
+    {
+        return $this->db->fetchAll(
+            'SELECT id, file_name, file_type, file_category FROM task_files WHERE task_id = :task_id AND is_public = TRUE',
+            ['task_id' => $taskId]
+        );
+    }
+
+    /**
+     * 發送郵件通知
+     */
+    public function sendEmailNotification(string $userId, string $type, array $data): bool
+    {
+        try {
+            // 獲取用戶郵箱
+            $user = $this->db->fetchOne(
+                'SELECT email, username FROM users WHERE id = :user_id',
+                ['user_id' => $userId]
+            );
+
+            if (!$user || !$user['email']) {
+                return false;
+            }
+
+            // 這裡應該實現實際的郵件發送邏輯
+            // 暫時記錄到日誌
+            error_log("發送郵件到 {$user['email']}: {$type}");
+            
+            return true;
+        } catch (\Exception $e) {
+            error_log("發送郵件通知失敗: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 發送推送通知
+     */
+    public function sendPushNotification(string $userId, string $type, array $data): bool
+    {
+        try {
+            // 這裡應該實現實際的推送通知邏輯
+            // 暫時記錄到日誌
+            error_log("發送推送通知到用戶 {$userId}: {$type}");
+            
+            return true;
+        } catch (\Exception $e) {
+            error_log("發送推送通知失敗: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 標記通知為已讀
+     */
     public function markAsRead(string $notificationId, string $userId): bool
     {
-        $sql = "UPDATE notifications SET is_read = true, read_at = NOW() 
-                WHERE id = :id AND user_id = :user_id";
-        
-        return $this->db->query($sql, [
-            'id' => $notificationId,
-            'user_id' => $userId
-        ]) !== false;
-    }
-
-    public function markAllAsRead(string $userId): bool
-    {
-        $sql = "UPDATE notifications SET is_read = true, read_at = NOW() 
-                WHERE user_id = :user_id AND is_read = false";
-        
-        return $this->db->query($sql, ['user_id' => $userId]) !== false;
-    }
-
-    public function deleteNotification(string $notificationId, string $userId): bool
-    {
-        $sql = "DELETE FROM notifications WHERE id = :id AND user_id = :user_id";
-        
-        return $this->db->query($sql, [
-            'id' => $notificationId,
-            'user_id' => $userId
-        ]) !== false;
-    }
-
-    public function deleteOldNotifications(string $userId, int $daysOld = 30): bool
-    {
-        $sql = "DELETE FROM notifications 
-                WHERE user_id = :user_id 
-                AND created_at < NOW() - INTERVAL :days DAY";
-        
-        return $this->db->query($sql, [
-            'user_id' => $userId,
-            'days' => $daysOld
-        ]) !== false;
-    }
-
-    public function createTaskNotification(string $userId, string $taskId, string $type, array $data = []): string
-    {
-        $messages = [
-            'new_application' => '有新的任務申請',
-            'application_accepted' => '您的任務申請已被接受',
-            'application_rejected' => '您的任務申請未被接受',
-            'task_completed' => '任務已完成',
-            'task_cancelled' => '任務已被取消',
-            'payment_received' => '收到任務報酬',
-            'deadline_reminder' => '任務截止日期提醒'
-        ];
-
-        $message = $messages[$type] ?? '任務相關通知';
-        
-        return $this->createNotification($userId, $type, $message, array_merge($data, ['task_id' => $taskId]));
-    }
-
-    public function createSystemNotification(string $userId, string $type, string $message, array $data = []): string
-    {
-        return $this->createNotification($userId, 'system_' . $type, $message, $data);
-    }
-
-    public function createBatchNotifications(array $userIds, string $type, string $message, array $data = []): array
-    {
-        $notificationIds = [];
-        
-        foreach ($userIds as $userId) {
-            $notificationIds[] = $this->createNotification($userId, $type, $message, $data);
+        try {
+            $this->db->update('notifications', 
+                ['id' => $notificationId],
+                [
+                    'read_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]
+            );
+            
+            return true;
+        } catch (\Exception $e) {
+            error_log("標記通知為已讀失敗: " . $e->getMessage());
+            return false;
         }
-        
-        return $notificationIds;
     }
 
-    public function getNotificationTypes(): array
+    /**
+     * 獲取用戶未讀通知
+     */
+    public function getUnreadNotifications(string $userId): array
     {
-        return [
-            'task' => [
-                'new_application' => '新任務申請',
-                'application_accepted' => '申請被接受',
-                'application_rejected' => '申請被拒絕',
-                'task_completed' => '任務完成',
-                'task_cancelled' => '任務取消',
-                'payment_received' => '收到報酬',
-                'deadline_reminder' => '截止提醒'
-            ],
-            'system' => [
-                'welcome' => '歡迎通知',
-                'profile_update' => '資料更新',
-                'security_alert' => '安全提醒',
-                'maintenance' => '系統維護'
-            ],
-            'matching' => [
-                'new_task_match' => '新任務匹配',
-                'creator_suggestion' => '創作者推薦',
-                'supplier_suggestion' => '供應商推薦'
-            ]
-        ];
+        try {
+            return $this->db->fetchAll(
+                'SELECT * FROM notifications WHERE user_id = :user_id AND read_at IS NULL ORDER BY created_at DESC',
+                ['user_id' => $userId]
+            );
+        } catch (\Exception $e) {
+            error_log("獲取未讀通知失敗: " . $e->getMessage());
+            return [];
+        }
     }
 
-    public function getNotificationStats(string $userId): array
+    /**
+     * 獲取用戶所有通知
+     */
+    public function getUserNotifications(string $userId, int $limit = 50, int $offset = 0): array
     {
-        $sql = "SELECT 
-                    COUNT(*) as total,
-                    COUNT(CASE WHEN is_read = false THEN 1 END) as unread,
-                    COUNT(CASE WHEN type LIKE 'task%' THEN 1 END) as task_notifications,
-                    COUNT(CASE WHEN type LIKE 'system%' THEN 1 END) as system_notifications,
-                    COUNT(CASE WHEN type LIKE 'matching%' THEN 1 END) as matching_notifications
-                FROM notifications 
-                WHERE user_id = :user_id";
-        
-        $result = $this->db->query($sql, ['user_id' => $userId])[0] ?? [];
-        
-        return [
-            'total' => $result['total'] ?? 0,
-            'unread' => $result['unread'] ?? 0,
-            'by_type' => [
-                'task' => $result['task_notifications'] ?? 0,
-                'system' => $result['system_notifications'] ?? 0,
-                'matching' => $result['matching_notifications'] ?? 0
-            ]
-        ];
+        try {
+            return $this->db->fetchAll(
+                'SELECT * FROM notifications WHERE user_id = :user_id ORDER BY created_at DESC LIMIT :limit OFFSET :offset',
+                [
+                    'user_id' => $userId,
+                    'limit' => $limit,
+                    'offset' => $offset
+                ]
+            );
+        } catch (\Exception $e) {
+            error_log("獲取用戶通知失敗: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * 刪除舊通知
+     */
+    public function cleanupOldNotifications(int $daysOld = 90): int
+    {
+        try {
+            $cutoffDate = date('Y-m-d H:i:s', strtotime("-{$daysOld} days"));
+            
+            $result = $this->db->execute(
+                'DELETE FROM notifications WHERE created_at < :cutoff_date AND read_at IS NOT NULL',
+                ['cutoff_date' => $cutoffDate]
+            );
+            
+            return $result;
+        } catch (\Exception $e) {
+            error_log("清理舊通知失敗: " . $e->getMessage());
+            return 0;
+        }
     }
 }

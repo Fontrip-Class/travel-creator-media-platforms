@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Star, ThumbsUp, MessageSquare, CheckCircle2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface RatingCategory {
   id: string;
@@ -16,8 +17,9 @@ interface RatingCategory {
 }
 
 export default function Rating() {
-  const { id, type } = useParams(); // type: 'supplier' or 'creator'
+  const { id: taskId, type } = useParams(); // type: 'supplier' or 'creator'
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const [ratings, setRatings] = useState<RatingCategory[]>([
     { id: "quality", name: "作品質量", rating: 0 },
@@ -28,6 +30,7 @@ export default function Rating() {
   
   const [comment, setComment] = useState("");
   const [recommend, setRecommend] = useState<boolean | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 模擬任務和評價對象數據
   const taskInfo = {
@@ -45,18 +48,65 @@ export default function Rating() {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 這裡會連接到後端API提交評價
-    const ratingData = {
-      taskId: id,
-      targetType: type,
-      ratings,
-      comment,
-      recommend
-    };
-    console.log("提交評價:", ratingData);
-    navigate("/dashboard/tasks");
+    
+    if (averageRating === 0) {
+      toast({
+        title: "錯誤",
+        description: "請至少評分一個項目",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (recommend === null) {
+      toast({
+        title: "錯誤",
+        description: "請選擇是否推薦",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // 準備API數據，確保與後端規格一致
+      const apiData = {
+        rating: Math.round(averageRating),
+        feedback: comment,
+        recommend: recommend,
+        category_ratings: ratings.map(cat => ({
+          category: cat.name,
+          rating: cat.rating
+        }))
+      };
+
+      // 調用API提交評分
+      const response = await apiService.rateTask(taskId, apiData);
+      
+      if (response.success) {
+        toast({
+          title: "評分成功",
+          description: "您的評價已成功提交，感謝您的回饋！",
+        });
+        
+        // 導航到任務列表頁面
+        navigate("/dashboard/tasks");
+      } else {
+        throw new Error(response.message || "評分失敗");
+      }
+    } catch (error: any) {
+      // 保留用戶填寫的數據，顯示詳細錯誤訊息
+      toast({
+        title: "評分失敗",
+        description: error.message || "評分過程中發生錯誤，請稍後重試",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const averageRating = ratings.reduce((sum, cat) => sum + cat.rating, 0) / ratings.length;
@@ -207,7 +257,11 @@ export default function Rating() {
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="min-h-[100px]"
+                  maxLength={500}
                 />
+                <p className="text-xs text-gray-500">
+                  留言長度：最多500字符，請分享您的真實體驗
+                </p>
               </div>
 
               {/* 提交按鈕 */}

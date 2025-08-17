@@ -354,4 +354,144 @@ class TaskController
             throw new \InvalidArgumentException('評分資料驗證失敗: ' . $e->getMessage());
         }
     }
+
+    // 草稿相關方法
+    public function saveTaskDraft(Request $request, Response $response): Response
+    {
+        try {
+            $data = $request->getParsedBody();
+            $data['user_id'] = $request->getAttribute('user')['user_id'];
+            $data['is_draft'] = true;
+            
+            $result = $this->taskService->saveTaskDraft($data);
+            return $this->apiResponse->success($response, '草稿保存成功', $result);
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
+    public function getTaskDrafts(Request $request, Response $response): Response
+    {
+        try {
+            $userId = $request->getAttribute('user')['user_id'];
+            $page = (int) ($request->getQueryParams()['page'] ?? 1);
+            $limit = min(50, max(1, (int) ($request->getQueryParams()['limit'] ?? 20)));
+            
+            $result = $this->taskService->getTaskDrafts($userId, $page, $limit);
+            return $this->apiResponse->paginated($response, $result['drafts'], $result['pagination']);
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
+    public function getTaskDraft(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $draftId = $args['id'];
+            $userId = $request->getAttribute('user')['user_id'];
+            
+            $draft = $this->taskService->getTaskDraft($draftId, $userId);
+            return $this->apiResponse->success($response, '草稿獲取成功', $draft);
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
+    public function updateTaskDraft(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $draftId = $args['id'];
+            $data = $request->getParsedBody();
+            $userId = $request->getAttribute('user')['user_id'];
+            
+            $result = $this->taskService->updateTaskDraft($draftId, $data, $userId);
+            return $this->apiResponse->success($response, '草稿更新成功', $result);
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
+    public function deleteTaskDraft(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $draftId = $args['id'];
+            $userId = $request->getAttribute('user')['user_id'];
+            
+            $this->taskService->deleteTaskDraft($draftId, $userId);
+            return $this->apiResponse->success($response, '草稿刪除成功');
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
+    public function publishTaskDraft(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $draftId = $args['id'];
+            $userId = $request->getAttribute('user')['user_id'];
+            
+            $result = $this->taskService->publishTaskDraft($draftId, $userId);
+            return $this->apiResponse->success($response, '草稿發布成功', $result);
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
+    // 申請相關方法
+    public function getTaskApplications(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $taskId = $args['id'];
+            $page = (int) ($request->getQueryParams()['page'] ?? 1);
+            $limit = min(50, max(1, (int) ($request->getQueryParams()['limit'] ?? 20)));
+            
+            $result = $this->taskService->getTaskApplications($taskId, $page, $limit);
+            return $this->apiResponse->paginated($response, $result['applications'], $result['pagination']);
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
+    public function updateApplication(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $applicationId = $args['id'];
+            $data = $request->getParsedBody();
+            $userId = $request->getAttribute('user')['user_id'];
+            
+            $result = $this->taskService->updateApplication($applicationId, $data, $userId);
+            return $this->apiResponse->success($response, '申請更新成功', $result);
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
+    // 評分相關方法
+    public function getTaskRatings(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $taskId = $args['id'];
+            $page = (int) ($request->getQueryParams()['page'] ?? 1);
+            $limit = min(50, max(1, (int) ($request->getQueryParams()['limit'] ?? 20)));
+            
+            $result = $this->taskService->getTaskRatings($taskId, $page, $limit);
+            return $this->apiResponse->paginated($response, $result['ratings'], $result['pagination']);
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
+    public function getUserRatings(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $userId = $args['id'];
+            $page = (int) ($request->getQueryParams()['page'] ?? 1);
+            $limit = min(50, max(1, (int) ($request->getQueryParams()['limit'] ?? 20)));
+            
+            $result = $this->taskService->getUserRatings($userId, $page, $limit);
+            return $this->apiResponse->paginated($response, $result['ratings'], $result['pagination']);
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
 }
