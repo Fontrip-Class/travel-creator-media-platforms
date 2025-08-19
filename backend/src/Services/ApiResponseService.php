@@ -150,23 +150,74 @@ class ApiResponseService
     {
         $statusCode = 500;
         $message = 'Internal server error';
+        $errorCode = 'INTERNAL_ERROR';
+        $debugInfo = [];
 
-        // 根據異常類型設置狀態碼
+        // 根據異常類型設置狀態碼和錯誤代碼
         if ($exception instanceof \InvalidArgumentException) {
             $statusCode = 400;
             $message = $exception->getMessage();
+            $errorCode = 'INVALID_ARGUMENT';
         } elseif ($exception instanceof \DomainException) {
             $statusCode = 422;
             $message = $exception->getMessage();
+            $errorCode = 'VALIDATION_ERROR';
         } elseif ($exception instanceof \RuntimeException) {
             $statusCode = 500;
             $message = $exception->getMessage();
+            $errorCode = 'RUNTIME_ERROR';
+        } elseif ($exception instanceof \PDOException) {
+            $statusCode = 500;
+            $message = 'Database error occurred';
+            $errorCode = 'DATABASE_ERROR';
+            $debugInfo['sql_state'] = $exception->getCode();
+            $debugInfo['database_message'] = $exception->getMessage();
         }
 
-        // 記錄錯誤日誌
-        error_log("API Error: " . $exception->getMessage() . " in " . $exception->getFile() . ":" . $exception->getLine());
+        // 在開發環境中提供詳細的調試信息
+        if (($_ENV['APP_ENV'] ?? 'production') === 'development' || ($_ENV['APP_DEBUG'] ?? 'false') === 'true') {
+            $debugInfo = array_merge($debugInfo, [
+                'error_code' => $errorCode,
+                'error_type' => get_class($exception),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
+                'request_time' => date('Y-m-d H:i:s'),
+                'memory_usage' => memory_get_usage(true),
+                'peak_memory' => memory_get_peak_usage(true)
+            ]);
+        }
 
-        return $this->error($response, $message, $statusCode);
+        // 記錄詳細錯誤到日誌
+        $this->logDetailedError($exception, $debugInfo);
+
+        return $this->error($response, $message, $statusCode, $debugInfo);
+    }
+
+    private function logDetailedError(\Throwable $exception, array $debugInfo): void
+    {
+        $logData = [
+            'timestamp' => date('Y-m-d H:i:s'),
+            'error_type' => get_class($exception),
+            'message' => $exception->getMessage(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'trace' => $exception->getTraceAsString(),
+            'debug_info' => $debugInfo
+        ];
+
+        // 寫入錯誤日誌文件
+        $logDir = __DIR__ . '/../../logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+
+        $logFile = $logDir . '/detailed_errors.log';
+        $logEntry = json_encode($logData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n---\n";
+        file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+
+        // 同時寫入系統錯誤日誌
+        error_log("API Error: " . $exception->getMessage() . " in " . $exception->getFile() . ":" . $exception->getLine());
     }
 
     public function rateLimitExceeded(Response $response, int $retryAfter = 60): Response

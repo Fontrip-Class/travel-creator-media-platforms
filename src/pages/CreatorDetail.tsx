@@ -9,14 +9,14 @@ const CreatorDetail = () => {
   if (!creator) {
     return (
       <main className="container py-10">
-        <h1 className="text-2xl font-bold">找不到創作者</h1>
-        <Link to="/creators" className="text-sm text-primary mt-2 inline-block">返回名錄</Link>
+        <h1 className="text-2xl font-bold">創作者不存在</h1>
+        <Link to="/creators" className="text-sm text-primary mt-2 inline-block">返回創作者列表</Link>
       </main>
     );
   }
 
   const title = `${creator.name} | 創作者詳情`;
-  const description = `領域：${creator.niches.join("、")}｜平台：${creator.platforms.join("、")}`;
+  const description = `專長：${creator.niches.join("、")}｜平台：${creator.platforms.join("、")}`;
 
   return (
     <main className="container py-10">
@@ -42,7 +42,7 @@ const CreatorDetail = () => {
 
       <header className="mb-6">
         <h1 className="text-3xl font-bold">{creator.name}</h1>
-        <p className="text-muted-foreground mt-2">領域：{creator.niches.join("、")} · 平台：{creator.platforms.join("、")}</p>
+        <p className="text-muted-foreground mt-2">專長：{creator.niches.join("、")} · 平台：{creator.platforms.join("、")}</p>
       </header>
 
       <section className="grid gap-6 md:grid-cols-3">
@@ -52,7 +52,7 @@ const CreatorDetail = () => {
         </article>
 
         <article className="md:col-span-2 p-6 rounded-xl border">
-          <h2 className="font-semibold mb-3">過往行銷素材</h2>
+          <h2 className="font-semibold mb-3">數位行銷素材</h2>
           {creator.assets && creator.assets.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2">
               {creator.assets.map((a) => (
@@ -86,7 +86,7 @@ const CreatorDetail = () => {
                 </div>
                 <div className="text-sm">{creator.rating.toFixed(1)} / 5</div>
               </div>
-              {creator.ratingCount && <div className="text-xs text-muted-foreground mt-1">來自 {creator.ratingCount} 則評分</div>}
+              {creator.ratingCount && <div className="text-xs text-muted-foreground mt-1">來自 {creator.ratingCount} 個評價</div>}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground mb-4">尚未評分</p>
@@ -95,7 +95,7 @@ const CreatorDetail = () => {
           <h3 className="font-semibold mb-2">聯絡</h3>
           {creator.contact.startsWith("http") ? (
             <p className="text-sm">官方網站：
-              <a href={creator.contact} target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">前往</a>
+              <a href={creator.contact} target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">點擊訪問</a>
             </p>
           ) : (
             <p className="text-sm">Email：
@@ -103,7 +103,7 @@ const CreatorDetail = () => {
             </p>
           )}
 
-          <Link to="/creators" className="text-sm text-primary mt-4 inline-block">返回名錄</Link>
+          <Link to="/creators" className="text-sm text-primary mt-4 inline-block">返回創作者列表</Link>
         </aside>
       </section>
     </main>

@@ -1,39 +1,37 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { SEO } from "@/components/SEO";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Upload, AlertCircle, CheckCircle2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { apiService } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import apiService from "@/lib/api";
+import { Upload, X, FileText, DollarSign, Calendar, CheckCircle } from "lucide-react";
 
 export default function TaskApplication() {
   const { id: taskId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     proposal: "",
-    experience: "",
-    timeline: "",
     budget: "",
-    portfolio: [] as File[],
-    terms: false
+    timeline: "",
+    experience: "",
+    portfolio: [] as File[]
   });
 
-  // 模擬任務數據
+  // 模擬任務資料
   const task = {
     id: id,
-    title: "台東季節活動宣傳",
+    title: "台東秋季活動宣傳",
     reward: 15000,
-    requirements: ["圖文創作", "短影音製作", "攝影"],
+    requirements: ["攝影技巧", "影片製作", "攝影"],
     deadline: "2024-12-31"
   };
 
@@ -52,7 +50,7 @@ export default function TaskApplication() {
     setIsSubmitting(true);
     
     try {
-      // 準備API數據，確保與後端規格一致
+      // 準備API資料，確保與後端規格一致
       const apiData = {
         proposal: formData.proposal,
         proposed_budget: formData.budget ? parseFloat(formData.budget) : undefined,
@@ -70,7 +68,7 @@ export default function TaskApplication() {
       if (response.success) {
         toast({
           title: "申請成功",
-          description: "您的申請已成功提交，供應商會盡快審核！",
+          description: "申請已成功提交，供應商會盡快審核",
         });
         
         // 導航到申請列表頁面
@@ -79,10 +77,10 @@ export default function TaskApplication() {
         throw new Error(response.message || "申請失敗");
       }
     } catch (error: any) {
-      // 保留用戶填寫的數據，顯示詳細錯誤訊息
+      // 保留用戶填寫的資料，顯示詳細錯誤訊息
       toast({
         title: "申請失敗",
-        description: error.message || "申請過程中發生錯誤，請稍後重試",
+        description: error.message || "申請過程中發生錯誤，請稍後再試",
         variant: "destructive"
       });
     } finally {
@@ -95,11 +93,18 @@ export default function TaskApplication() {
     setFormData(prev => ({ ...prev, portfolio: [...prev.portfolio, ...files] }));
   };
 
+  const removeFile = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      portfolio: prev.portfolio.filter((_, i) => i !== index)
+    }));
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <SEO 
         title={`申請任務 - ${task.title}`}
-        description={`申請承接${task.title}委託任務`}
+        description={`申請接取${task.title}委託任務`}
       />
 
       <div className="space-y-6">
@@ -132,123 +137,150 @@ export default function TaskApplication() {
         {/* 申請表單 */}
         <Card>
           <CardHeader>
-            <CardTitle>申請資訊</CardTitle>
+            <CardTitle className="text-xl">申請表單</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* 提案說明 */}
-              <div className="space-y-2">
-                <Label htmlFor="proposal">提案說明 *</Label>
+              <div>
+                <Label htmlFor="proposal" className="text-base font-medium">
+                  提案說明 *
+                </Label>
                 <Textarea
                   id="proposal"
-                  placeholder="請說明您的創作理念、執行方式和預期成果..."
                   value={formData.proposal}
                   onChange={(e) => setFormData(prev => ({ ...prev, proposal: e.target.value }))}
-                  className="min-h-[120px]"
+                  placeholder="請詳細說明您的創作理念、執行方式和預期成果"
+                  rows={4}
                   required
                 />
-                <p className="text-xs text-gray-500">
-                  提案說明長度：10-2000字符，請詳細說明您的創作理念和執行方式
-                </p>
+              </div>
+
+              {/* 預算和時程 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="budget" className="text-base font-medium">
+                    預算提案
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">NT$</span>
+                    <Input
+                      id="budget"
+                      type="number"
+                      value={formData.budget}
+                      onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
+                      placeholder="請輸入您的預算"
+                      className="pl-12"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="timeline" className="text-base font-medium">
+                    預計完成時間
+                  </Label>
+                  <Input
+                    id="timeline"
+                    value={formData.timeline}
+                    onChange={(e) => setFormData(prev => ({ ...prev, timeline: e.target.value }))}
+                    placeholder="例如：2週內"
+                  />
+                </div>
               </div>
 
               {/* 相關經驗 */}
-              <div className="space-y-2">
-                <Label htmlFor="experience">相關經驗 *</Label>
+              <div>
+                <Label htmlFor="experience" className="text-base font-medium">
+                  相關經驗 *
+                </Label>
                 <Textarea
                   id="experience"
-                  placeholder="請分享您在類似項目的經驗和成果..."
                   value={formData.experience}
                   onChange={(e) => setFormData(prev => ({ ...prev, experience: e.target.value }))}
-                  className="min-h-[100px]"
+                  placeholder="請描述您過去的相關創作經驗和作品"
+                  rows={3}
                   required
                 />
               </div>
 
-              {/* 執行時程 */}
-              <div className="space-y-2">
-                <Label htmlFor="timeline">預計執行時程</Label>
-                <Input
-                  id="timeline"
-                  placeholder="例如：2週完成拍攝，1週後製"
-                  value={formData.timeline}
-                  onChange={(e) => setFormData(prev => ({ ...prev, timeline: e.target.value }))}
-                />
-              </div>
-
-              {/* 預算說明 */}
-              <div className="space-y-2">
-                <Label htmlFor="budget">預算配置說明</Label>
-                <Textarea
-                  id="budget"
-                  placeholder="請說明預算如何分配（交通、設備、後製等）..."
-                  value={formData.budget}
-                  onChange={(e) => setFormData(prev => ({ ...prev, budget: e.target.value }))}
-                />
-              </div>
-
-              <Separator />
-
               {/* 作品集上傳 */}
-              <div className="space-y-4">
-                <Label>作品集展示</Label>
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-                  <Upload className="w-10 h-10 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground mb-4">
-                    上傳相關作品集（圖片、影片或文件）
-                  </p>
-                  <Input
-                    type="file"
-                    multiple
-                    accept="image/*,video/*,.pdf,.doc,.docx"
-                    onChange={handleFileUpload}
-                    className="max-w-xs"
-                  />
-                </div>
-                {formData.portfolio.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">已上傳檔案：</p>
-                    {formData.portfolio.map((file, index) => (
-                      <div key={index} className="text-sm text-muted-foreground">
-                        • {file.name}
-                      </div>
-                    ))}
+              <div>
+                <Label className="text-base font-medium">
+                  作品集上傳
+                </Label>
+                <div className="mt-2">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="mt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => document.getElementById('portfolio-upload')?.click()}
+                      >
+                        選擇檔案
+                      </Button>
+                      <input
+                        id="portfolio-upload"
+                        type="file"
+                        multiple
+                        accept="image/*,video/*,.pdf,.doc,.docx"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      支援圖片、影片、PDF、Word等格式
+                    </p>
                   </div>
-                )}
+                  
+                  {/* 已上傳檔案列表 */}
+                  {formData.portfolio.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {formData.portfolio.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <FileText className="h-5 w-5 text-gray-500" />
+                            <div>
+                              <p className="text-sm font-medium">{file.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <Separator />
-
-              {/* 注意事項 */}
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  申請前請確認您有能力在指定時間內完成任務，並同意遵守平台的服務條款。
-                </AlertDescription>
-              </Alert>
-
-              {/* 同意條款 */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="terms"
-                  checked={formData.terms}
-                  onCheckedChange={(checked) => 
-                    setFormData(prev => ({ ...prev, terms: checked as boolean }))
-                  }
-                />
-                <Label htmlFor="terms" className="text-sm">
-                  我同意平台服務條款，並確認提供的資訊真實有效
-                </Label>
-              </div>
 
               {/* 提交按鈕 */}
-              <div className="flex gap-4 pt-4">
-                <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-                  取消
-                </Button>
-                <Button type="submit" disabled={!formData.terms || !formData.proposal.trim()}>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  提交申請
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="min-w-[120px]"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                      提交中...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      提交申請
+                    </>
+                  )}
                 </Button>
               </div>
             </form>

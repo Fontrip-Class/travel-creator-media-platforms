@@ -1,7 +1,7 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -47,7 +47,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </CardHeader>
             <CardContent className="text-center space-y-4">
               <p className="text-sm text-muted-foreground">
-                抱歉，頁面發生了錯誤。請嘗試重新載入頁面，或聯繫技術支援。
+                抱歉，發生了一些錯誤。請嘗試重新載入頁面，或聯繫技術支援。
               </p>
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <details className="text-left">
@@ -65,9 +65,9 @@ export class ErrorBoundary extends Component<Props, State> {
                   <RefreshCw className="w-4 h-4 mr-2" />
                   重試
                 </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.location.reload()} 
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.reload()}
                   className="flex-1"
                 >
                   重新載入

@@ -1,34 +1,34 @@
-import { SEO } from "@/components/SEO";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import SEO from "@/components/SEO";
 
 export default function SuppliersAdmin() {
   return (
     <div className="grid gap-6">
-      <SEO title="供應商管理" description="新增、編輯旅遊服務供應商資料與上架" />
+      <SEO title="供應商管理" description="管理與編輯供應商相關資料" />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">搜尋與清單</CardTitle>
+          <CardTitle className="text-base">供應商列表</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-4">
-            <Input placeholder="搜尋名稱/地區" />
+            <Input placeholder="供應商名稱/關鍵字" />
             <Select>
               <SelectTrigger>
                 <SelectValue placeholder="類別" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="旅宿">旅宿</SelectItem>
+                <SelectItem value="住宿">住宿</SelectItem>
                 <SelectItem value="餐飲">餐飲</SelectItem>
                 <SelectItem value="景點">景點</SelectItem>
                 <SelectItem value="活動">活動</SelectItem>
                 <SelectItem value="交通">交通</SelectItem>
-                <SelectItem value="其他">其他</SelectItem>
+                <SelectItem value="購物">購物</SelectItem>
               </SelectContent>
             </Select>
             <Button>搜尋</Button>
@@ -45,9 +45,9 @@ export default function SuppliersAdmin() {
               </TableHeader>
               <TableBody>
                 <TableRow>
-                  <TableCell>台北旅宿示例</TableCell>
-                  <TableCell>旅宿</TableCell>
-                  <TableCell>台北市</TableCell>
+                  <TableCell>台東溫泉住宿示範</TableCell>
+                  <TableCell>住宿</TableCell>
+                  <TableCell>台東</TableCell>
                   <TableCell>王小明</TableCell>
                 </TableRow>
               </TableBody>
@@ -72,18 +72,18 @@ export default function SuppliersAdmin() {
                 <SelectValue placeholder="選擇類別" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="旅宿">旅宿</SelectItem>
+                <SelectItem value="住宿">住宿</SelectItem>
                 <SelectItem value="餐飲">餐飲</SelectItem>
                 <SelectItem value="景點">景點</SelectItem>
                 <SelectItem value="活動">活動</SelectItem>
                 <SelectItem value="交通">交通</SelectItem>
-                <SelectItem value="其他">其他</SelectItem>
+                <SelectItem value="購物">購物</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="region">地區</Label>
-            <Input id="region" placeholder="縣市/區" />
+            <Input id="region" placeholder="縣市/鄉鎮" />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="desc">簡介</Label>

@@ -4,9 +4,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 
 const roles = [
-  { key: "admin", name: "管理者" },
+  { key: "admin", name: "管理員" },
   { key: "tourism", name: "觀光署" },
-  { key: "supplier", name: "旅遊服務供應商" },
+  { key: "supplier", name: "供應商/景點供應商" },
   { key: "creator", name: "創作者" },
   { key: "media", name: "媒體" },
 ];
@@ -22,11 +22,11 @@ const permissions = [
 export default function PermissionsAdmin() {
   return (
     <div className="grid gap-6">
-      <SEO title="權限管理" description="設定各角色於後台可執行之操作" />
+      <SEO title="權限管理" description="設定各角色於後台可執行的功能" />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">角色權限矩陣（示意）</CardTitle>
+          <CardTitle className="text-base">角色權限矩陣（示範）</CardTitle>
         </CardHeader>
         <CardContent className="overflow-auto">
           <Table>

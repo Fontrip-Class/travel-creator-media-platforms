@@ -1,12 +1,29 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Download, Upload, TrendingUp, Users, Calendar, DollarSign, 
-  Radio, Eye, Share2, BarChart3, FileText, Image, Video
+  Plus, 
+  Eye, 
+  Download, 
+  Share2, 
+  BarChart3, 
+  Calendar, 
+  Users, 
+  Clock, 
+  Star,
+  TrendingUp,
+  Image,
+  Video,
+  FileText,
+  Globe,
+  Facebook,
+  Instagram,
+  Youtube
 } from "lucide-react";
 
 interface Asset {
@@ -31,23 +48,24 @@ interface Publication {
   publishedAt: string;
 }
 
+// 模擬數據
 const MOCK_ASSETS: Asset[] = [
   {
     id: "asset_001",
-    title: "台東熱氣球節宣傳海報",
+    title: "台東秋季活動宣傳海報",
     type: "image",
-    supplier: "台東旅遊局",
+    supplier: "台東縣政府",
     downloadCount: 45,
     publishCount: 12,
     status: "active",
-    tags: ["台東", "熱氣球", "宣傳", "海報"],
+    tags: ["台東", "秋季", "活動", "海報"],
     createdAt: "2024-01-10"
   },
   {
     id: "asset_002",
     title: "花蓮海岸線攝影集",
     type: "image",
-    supplier: "花蓮觀光處",
+    supplier: "花蓮觀光局",
     downloadCount: 32,
     publishCount: 8,
     status: "active",
@@ -70,7 +88,7 @@ const MOCK_ASSETS: Asset[] = [
 const MOCK_PUBLICATIONS: Publication[] = [
   {
     id: "pub_001",
-    title: "台東熱氣球節宣傳海報",
+    title: "台東秋季活動宣傳海報",
     platform: "Facebook",
     status: "published",
     views: 2500,
@@ -89,7 +107,7 @@ const MOCK_PUBLICATIONS: Publication[] = [
   {
     id: "pub_003",
     title: "阿里山日出影片",
-    platform: "YouTube",
+            platform: "Youtube",
     status: "scheduled",
     views: 0,
     engagement: 0,
@@ -104,7 +122,7 @@ export default function MediaDashboard() {
   const [publications, setPublications] = useState<Publication[]>(MOCK_PUBLICATIONS);
 
   const handleAction = (action: string, id: string) => {
-    console.log(`執行操作: ${action} ID: ${id}`);
+    console.log(`執行動作: ${action} ID: ${id}`);
     
     switch (action) {
       case "browse_assets":
@@ -120,7 +138,7 @@ export default function MediaDashboard() {
         navigate("/media/analytics");
         break;
       default:
-        console.log(`未處理的操作: ${action}`);
+        console.log(`未知動作: ${action}`);
     }
   };
 
@@ -133,37 +151,30 @@ export default function MediaDashboard() {
     }
   };
 
+  const getPlatformIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case "facebook": return <Facebook className="h-4 w-4" />;
+      case "instagram": return <Instagram className="h-4 w-4" />;
+      case "youtube": return <Youtube className="h-4 w-4" />;
+      default: return <Globe className="h-4 w-4" />;
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "bg-green-100 text-green-800";
-      case "pending": return "bg-yellow-100 text-yellow-800";
-      case "published": return "bg-blue-100 text-blue-800";
-      case "scheduled": return "bg-purple-100 text-purple-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "active": return "bg-green-500";
+      case "inactive": return "bg-gray-500";
+      case "published": return "bg-blue-500";
+      case "scheduled": return "bg-yellow-500";
+      case "draft": return "bg-gray-400";
+      default: return "bg-gray-500";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case "active": return "活躍";
-      case "pending": return "待審核";
-      case "published": return "已發布";
-      case "scheduled": return "已排程";
-      default: return status;
-    }
-  };
-
-  const getPublicationStatusColor = (status: string) => {
-    switch (status) {
-      case "published": return "bg-green-100 text-green-800";
-      case "scheduled": return "bg-purple-100 text-purple-800";
-      case "draft": return "bg-gray-100 text-gray-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getPublicationStatusText = (status: string) => {
-    switch (status) {
+      case "inactive": return "非活躍";
       case "published": return "已發布";
       case "scheduled": return "已排程";
       case "draft": return "草稿";
@@ -173,23 +184,28 @@ export default function MediaDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEO
+        title="媒體儀表板 | 觀光署旅遊服務與行銷創作資源管理與媒合平台"
+        description="管理您的媒體資源和發布內容"
+      />
+      
       <div className="container mx-auto px-4 py-8">
         {/* 頁面標題 */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">媒體儀表板</h1>
-          <p className="text-gray-600">管理素材下載、內容發布和效果追蹤</p>
+          <h1 className="text-3xl font-bold text-gray-900">媒體儀表板</h1>
+          <p className="text-gray-600 mt-2">管理您的媒體資源和發布內容</p>
         </div>
 
-        {/* 統計卡片 */}
+        {/* 統計概覽 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">下載素材</p>
-                  <p className="text-2xl font-bold text-blue-600">105</p>
+                  <p className="text-sm font-medium text-gray-600">總資源數</p>
+                  <p className="text-2xl font-bold text-gray-900">{assets.length}</p>
                 </div>
-                <Download className="h-8 w-8 text-blue-600" />
+                <FileText className="h-8 w-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
@@ -198,10 +214,12 @@ export default function MediaDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">發布內容</p>
-                  <p className="text-2xl font-bold text-green-600">35</p>
+                  <p className="text-sm font-medium text-gray-600">總下載數</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {assets.reduce((sum, asset) => sum + asset.downloadCount, 0)}
+                  </p>
                 </div>
-                <Upload className="h-8 w-8 text-green-600" />
+                <Download className="h-8 w-8 text-green-500" />
               </div>
             </CardContent>
           </Card>
@@ -210,10 +228,12 @@ export default function MediaDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">總瀏覽量</p>
-                  <p className="text-2xl font-bold text-purple-600">45.2K</p>
+                  <p className="text-sm font-medium text-gray-600">總發布數</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {assets.reduce((sum, asset) => sum + asset.publishCount, 0)}
+                  </p>
                 </div>
-                <Eye className="h-8 w-8 text-purple-600" />
+                <Share2 className="h-8 w-8 text-purple-500" />
               </div>
             </CardContent>
           </Card>
@@ -222,272 +242,169 @@ export default function MediaDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">互動率</p>
-                  <p className="text-2xl font-bold text-orange-600">8.5%</p>
+                  <p className="text-sm font-medium text-gray-600">活躍資源</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {assets.filter(asset => asset.status === "active").length}
+                  </p>
                 </div>
-                <TrendingUp className="h-8 w-8 text-orange-600" />
+                <TrendingUp className="h-8 w-8 text-orange-500" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* 快速操作 */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Radio className="h-5 w-5" />
-              快速操作
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button
-                onClick={() => handleAction("browse_assets", "")}
-                className="h-20 flex flex-col items-center justify-center gap-2"
-                variant="outline"
-              >
-                <Download className="h-6 w-6" />
-                <span>瀏覽素材</span>
-              </Button>
-              
-              <Button
-                onClick={() => navigate("/media/upload")}
-                className="h-20 flex flex-col items-center justify-center gap-2"
-                variant="outline"
-              >
-                <Upload className="h-6 w-6" />
-                <span>上傳內容</span>
-              </Button>
-              
-              <Button
-                onClick={() => handleAction("view_analytics", "")}
-                className="h-20 flex flex-col items-center justify-center gap-2"
-                variant="outline"
-              >
-                <BarChart3 className="h-6 w-6" />
-                <span>效果分析</span>
-              </Button>
-              
-              <Button
-                onClick={() => navigate("/media/settings")}
-                className="h-20 flex flex-col items-center justify-center gap-2"
-                variant="outline"
-              >
-                <Users className="h-6 w-6" />
-                <span>平台設定</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* 主要內容區域 */}
+        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">概覽</TabsTrigger>
+            <TabsTrigger value="assets">資源管理</TabsTrigger>
+            <TabsTrigger value="publications">發布管理</TabsTrigger>
+          </TabsList>
 
-        {/* 標籤頁 */}
-        <div className="mb-6">
-          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-            {["overview", "assets", "publications", "analytics"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setSelectedTab(tab)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  selectedTab === tab
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                {tab === "overview" && "總覽"}
-                {tab === "assets" && "我的素材"}
-                {tab === "publications" && "發布記錄"}
-                {tab === "analytics" && "效果分析"}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 內容區域 */}
-        {selectedTab === "overview" && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* 熱門素材 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Download className="h-5 w-5" />
-                  熱門素材
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {assets.slice(0, 3).map((asset) => (
-                    <div key={asset.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
+          <TabsContent value="overview" className="mt-6">
+            <div className="grid gap-6">
+              {/* 最近活動 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>最近活動</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {assets.slice(0, 3).map((asset) => (
+                      <div key={asset.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
                           {getAssetTypeIcon(asset.type)}
-                          <h3 className="font-medium text-gray-900 line-clamp-2">{asset.title}</h3>
+                          <div>
+                            <p className="font-medium">{asset.title}</p>
+                            <p className="text-sm text-gray-600">{asset.supplier}</p>
+                          </div>
                         </div>
-                        <Badge className={getStatusColor(asset.status)}>
-                          {getStatusText(asset.status)}
-                        </Badge>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-600">下載: {asset.downloadCount}</p>
+                          <p className="text-sm text-gray-600">發布: {asset.publishCount}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">供應商: {asset.supplier}</p>
-                      <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                        <span>下載: {asset.downloadCount}</span>
-                        <span>發布: {asset.publishCount}</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {asset.tags.slice(0, 3).map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleAction("download_asset", asset.id)}
-                          size="sm"
-                          variant="outline"
-                        >
-                          下載
-                        </Button>
-                        <Button
-                          onClick={() => handleAction("publish_content", asset.id)}
-                          size="sm"
-                        >
-                          發布
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* 最新發布 */}
+              {/* 快速操作 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>快速操作</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleAction("browse_assets", "")}>
+                      <Eye className="h-6 w-6" />
+                      <span>瀏覽資源</span>
+                    </Button>
+                    <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleAction("publish_content", "")}>
+                      <Share2 className="h-6 w-6" />
+                      <span>發布內容</span>
+                    </Button>
+                    <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleAction("view_analytics", "")}>
+                      <BarChart3 className="h-6 w-6" />
+                      <span>查看分析</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="assets" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Share2 className="h-5 w-5" />
-                  最新發布
-                </CardTitle>
+                <CardTitle>資源管理</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {publications.slice(0, 3).map((publication) => (
-                    <div key={publication.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-medium text-gray-900 line-clamp-2">{publication.title}</h3>
-                        <Badge className={getPublicationStatusColor(publication.status)}>
-                          {getPublicationStatusText(publication.status)}
-                        </Badge>
+                  {assets.map((asset) => (
+                    <div key={asset.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        {getAssetTypeIcon(asset.type)}
+                        <div>
+                          <p className="font-medium">{asset.title}</p>
+                          <p className="text-sm text-gray-600">{asset.supplier}</p>
+                          <div className="flex gap-2 mt-1">
+                            {asset.tags.map((tag, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">平台: {publication.platform}</p>
-                      <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
-                        <span>瀏覽: {publication.views.toLocaleString()}</span>
-                        <span>互動: {publication.engagement}</span>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-sm text-gray-600">下載: {asset.downloadCount}</p>
+                          <p className="text-sm text-gray-600">發布: {asset.publishCount}</p>
+                          <Badge className={getStatusColor(asset.status)}>
+                            {getStatusText(asset.status)}
+                          </Badge>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleAction("download_asset", asset.id)}>
+                            <Download className="h-4 w-4 mr-2" />
+                            下載
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => handleAction("publish_content", asset.id)}>
+                            <Share2 className="h-4 w-4 mr-2" />
+                            發布
+                          </Button>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-400">發布時間: {publication.publishedAt}</p>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+          </TabsContent>
 
-        {selectedTab === "assets" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>我的素材</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {assets.map((asset) => (
-                  <div key={asset.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {getAssetTypeIcon(asset.type)}
-                        <h3 className="font-medium text-gray-900 line-clamp-2">{asset.title}</h3>
+          <TabsContent value="publications" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>發布管理</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {publications.map((publication) => (
+                    <div key={publication.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        {getPlatformIcon(publication.platform)}
+                        <div>
+                          <p className="font-medium">{publication.title}</p>
+                          <p className="text-sm text-gray-600">{publication.platform}</p>
+                        </div>
                       </div>
-                      <Badge className={getStatusColor(asset.status)}>
-                        {getStatusText(asset.status)}
-                      </Badge>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-sm text-gray-600">瀏覽: {publication.views}</p>
+                          <p className="text-sm text-gray-600">互動: {publication.engagement}</p>
+                          <Badge className={getStatusColor(publication.status)}>
+                            {getStatusText(publication.status)}
+                          </Badge>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm">
+                            <Eye className="h-4 w-4 mr-2" />
+                            查看
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <BarChart3 className="h-4 w-4 mr-2" />
+                            分析
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">供應商: {asset.supplier}</p>
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                      <span>下載: {asset.downloadCount}</span>
-                      <span>發布: {asset.publishCount}</span>
-                      <span>創建: {asset.createdAt}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {asset.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleAction("download_asset", asset.id)}
-                        size="sm"
-                        variant="outline"
-                      >
-                        下載
-                      </Button>
-                      <Button
-                        onClick={() => handleAction("publish_content", asset.id)}
-                        size="sm"
-                      >
-                        發布
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {selectedTab === "publications" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>發布記錄</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {publications.map((publication) => (
-                  <div key={publication.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-medium text-gray-900 line-clamp-2">{publication.title}</h3>
-                      <Badge className={getPublicationStatusColor(publication.status)}>
-                        {getPublicationStatusText(publication.status)}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">平台: {publication.platform}</p>
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
-                      <span>瀏覽: {publication.views.toLocaleString()}</span>
-                      <span>互動: {publication.engagement}</span>
-                    </div>
-                    <p className="text-xs text-gray-400">發布時間: {publication.publishedAt}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {selectedTab === "analytics" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>效果分析</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <BarChart3 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">效果分析功能開發中</p>
-                <Button onClick={() => navigate("/media/analytics")}>
-                  查看詳細分析
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

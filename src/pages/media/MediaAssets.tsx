@@ -21,7 +21,7 @@ export default function MediaAssets() {
             返回儀表板
           </Button>
           <h1 className="text-3xl font-bold text-gray-900">素材瀏覽</h1>
-          <p className="text-gray-600">瀏覽和下載可用素材</p>
+          <p className="text-gray-600">瀏覽和下載可用的素材</p>
         </div>
 
         <Card>

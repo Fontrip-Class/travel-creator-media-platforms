@@ -21,7 +21,7 @@ export default function CreatorTasks() {
             返回儀表板
           </Button>
           <h1 className="text-3xl font-bold text-gray-900">任務瀏覽</h1>
-          <p className="text-gray-600">瀏覽適合的創作任務</p>
+          <p className="text-gray-600">瀏覽可用的創作任務</p>
         </div>
 
         <Card>

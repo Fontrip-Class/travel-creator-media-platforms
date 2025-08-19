@@ -3,13 +3,18 @@
 use DI\ContainerBuilder;
 use App\Services\DatabaseService;
 use App\Services\AuthService;
+use App\Services\UserService;
+use App\Services\PermissionService;
 use App\Services\FileUploadService;
 use App\Services\NotificationService;
 use App\Services\TaskService;
+use App\Services\WorkflowService;
 use App\Services\ApiResponseService;
 use App\Repositories\UserRepository;
 use App\Controllers\AuthController;
+use App\Controllers\UserController;
 use App\Controllers\TaskController;
+use App\Controllers\WorkflowController;
 use App\Controllers\TestController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\CorsMiddleware;
@@ -23,7 +28,7 @@ return function (ContainerBuilder $containerBuilder) {
             $config = [
                 'driver' => $_ENV['DB_DRIVER'] ?? 'sqlite',
                 'database' => $_ENV['DB_DATABASE'] ?? __DIR__ . '/../database/sqlite.db',
-                
+
                 // MySQL 配置（如果可用）
                 'mysql' => [
                     'host' => $_ENV['DB_HOST'] ?? 'localhost',
@@ -39,7 +44,7 @@ return function (ContainerBuilder $containerBuilder) {
                         PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
                     ],
                 ],
-                
+
                 // SQLite 配置
                 'sqlite' => [
                     'driver' => 'sqlite',
@@ -49,7 +54,7 @@ return function (ContainerBuilder $containerBuilder) {
                         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     ],
                 ],
-                
+
                 // PostgreSQL 配置（如果驅動可用）
                 'pgsql' => [
                     'driver' => 'pgsql',
@@ -66,7 +71,7 @@ return function (ContainerBuilder $containerBuilder) {
                     ],
                 ],
             ];
-            
+
             return new DatabaseService($config);
         }),
 
@@ -82,8 +87,20 @@ return function (ContainerBuilder $containerBuilder) {
             return new NotificationService($db);
         }),
 
-        TaskService::class => \DI\factory(function (DatabaseService $db, NotificationService $notificationService) {
-            return new TaskService($db, $notificationService);
+        PermissionService::class => \DI\factory(function (DatabaseService $db) {
+            return new PermissionService($db);
+        }),
+
+        UserService::class => \DI\factory(function (DatabaseService $db, NotificationService $notificationService) {
+            return new UserService($db, $notificationService);
+        }),
+
+        TaskService::class => \DI\factory(function (DatabaseService $db, NotificationService $notificationService, PermissionService $permissionService) {
+            return new TaskService($db, $notificationService, $permissionService);
+        }),
+
+        WorkflowService::class => \DI\factory(function (DatabaseService $db, NotificationService $notificationService, PermissionService $permissionService) {
+            return new WorkflowService($db, $notificationService, $permissionService);
         }),
 
         ApiResponseService::class => \DI\factory(function () {
@@ -100,8 +117,16 @@ return function (ContainerBuilder $containerBuilder) {
             return new AuthController($authService, $apiResponse);
         }),
 
+        UserController::class => \DI\factory(function (UserService $userService, PermissionService $permissionService, ApiResponseService $apiResponse) {
+            return new UserController($userService, $permissionService, $apiResponse);
+        }),
+
         TaskController::class => \DI\factory(function (TaskService $taskService, ApiResponseService $apiResponse) {
             return new TaskController($taskService, $apiResponse);
+        }),
+
+        WorkflowController::class => \DI\factory(function (WorkflowService $workflowService, ApiResponseService $apiResponse) {
+            return new WorkflowController($workflowService, $apiResponse);
         }),
 
         TestController::class => \DI\factory(function () {
@@ -109,8 +134,8 @@ return function (ContainerBuilder $containerBuilder) {
         }),
 
         // 中間件類
-        AuthMiddleware::class => \DI\factory(function (AuthService $authService) {
-            return new AuthMiddleware($authService);
+        AuthMiddleware::class => \DI\factory(function (AuthService $authService, ApiResponseService $apiResponse) {
+            return new AuthMiddleware($authService, $apiResponse);
         }),
 
         CorsMiddleware::class => \DI\factory(function () {
@@ -127,15 +152,15 @@ return function (ContainerBuilder $containerBuilder) {
         'app.env' => $_ENV['APP_ENV'] ?? 'development',
         'app.debug' => $_ENV['APP_DEBUG'] ?? false,
         'app.url' => $_ENV['APP_URL'] ?? 'http://localhost:8000',
-        
+
         'jwt.secret' => $_ENV['JWT_SECRET'] ?? 'default_secret_key_change_in_production',
         'jwt.expiration' => (int) ($_ENV['JWT_EXPIRATION'] ?? 3600),
         'jwt.refresh_expiration' => (int) ($_ENV['JWT_REFRESH_EXPIRATION'] ?? 86400),
-        
+
         'upload.max_size' => (int) ($_ENV['UPLOAD_MAX_SIZE'] ?? 10485760), // 10MB
         'upload.allowed_extensions' => explode(',', $_ENV['ALLOWED_EXTENSIONS'] ?? 'jpg,jpeg,png,gif,mp4,mov,avi'),
         'upload.path' => $_ENV['UPLOAD_PATH'] ?? 'uploads/',
-        
+
         'mail.driver' => $_ENV['MAIL_DRIVER'] ?? 'smtp',
         'mail.host' => $_ENV['MAIL_HOST'] ?? 'localhost',
         'mail.port' => (int) ($_ENV['MAIL_PORT'] ?? 587),
@@ -144,18 +169,18 @@ return function (ContainerBuilder $containerBuilder) {
         'mail.encryption' => $_ENV['MAIL_ENCRYPTION'] ?? 'tls',
         'mail.from.address' => $_ENV['MAIL_FROM_ADDRESS'] ?? 'noreply@example.com',
         'mail.from.name' => $_ENV['MAIL_FROM_NAME'] ?? 'Travel Platform',
-        
+
         'cache.driver' => $_ENV['CACHE_DRIVER'] ?? 'file',
         'cache.ttl' => (int) ($_ENV['CACHE_TTL'] ?? 3600),
-        
+
         'rate_limit.enabled' => $_ENV['RATE_LIMIT_ENABLED'] ?? true,
         'rate_limit.max_requests' => (int) ($_ENV['RATE_LIMIT_MAX_REQUESTS'] ?? 100),
         'rate_limit.window' => (int) ($_ENV['RATE_LIMIT_WINDOW'] ?? 3600),
-        
+
         'security.password_min_length' => (int) ($_ENV['PASSWORD_MIN_LENGTH'] ?? 8),
         'security.max_login_attempts' => (int) ($_ENV['MAX_LOGIN_ATTEMPTS'] ?? 5),
         'security.lockout_duration' => (int) ($_ENV['LOCKOUT_DURATION'] ?? 900),
-        
+
         'database.connection_timeout' => (int) ($_ENV['DB_CONNECTION_TIMEOUT'] ?? 30),
         'database.query_timeout' => (int) ($_ENV['DB_QUERY_TIMEOUT'] ?? 60),
         'database.max_retries' => (int) ($_ENV['DB_MAX_RETRIES'] ?? 3),

@@ -1,18 +1,50 @@
-import { Link } from "react-router-dom";
+import heroImage from "@/assets/hero-travel.jpg";
+import RoleDashboardEntry from "@/components/layout/RoleDashboardEntry";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Building2, Users, Newspaper, Search, MapPin, Calendar, Star, TrendingUp, Camera, FileText } from "lucide-react";
-import heroImage from "@/assets/hero-travel.jpg";
+import { useAuth } from "@/contexts/AuthContext";
+import { Building2, Newspaper, Search, Shield, TrendingUp, Users } from "lucide-react";
+import { Link } from "react-router-dom";
+
+function getRoleLabel(role: string): string {
+  switch (role) {
+    case 'supplier':
+      return '供應商';
+    case 'creator':
+      return '創作者';
+    case 'media':
+      return '媒體';
+    case 'admin':
+      return '管理員';
+    default:
+      return '用戶';
+  }
+}
 
 export default function Index() {
+  const { isAuthenticated, user } = useAuth();
+
+  // 如果用戶已登入，顯示角色導向的工作台入口
+  if (isAuthenticated && user?.role) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <SEO
+          title={`${getRoleLabel(user.role)}工作台 - 旅遊創作者平台`}
+          description="您的專屬工作區，管理任務、查看數據、協作創作"
+        />
+        <RoleDashboardEntry />
+      </div>
+    );
+  }
+
+  // 未登入用戶顯示原始首頁
   return (
     <div className="min-h-screen">
       <SEO
         title="觀光署旅遊服務與行銷創作資源管理與媒合平台"
-        description="連結旅遊服務供應商、創作者與媒體的專業媒合平台，提供任務驅動與素材驅動的行銷合作模式。"
+        description="台灣旅遊相關供應商、創作者、媒體的專業平台，任務驅動的行銷創作媒合模式"
       />
 
       {/* Hero Section */}
@@ -25,22 +57,22 @@ export default function Index() {
           />
           <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-secondary/40" />
         </div>
-        
+
         <div className="relative z-10 text-center text-primary-foreground px-4 max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-            觀光署旅遊服務與<br />
+            觀光署旅遊服務<br />
             行銷創作資源管理與媒合平台
           </h1>
           <p className="text-xl md:text-2xl mb-8 opacity-90">
-            連結供應商、創作者與媒體，打造台灣旅遊行銷生態圈
+            為供應商、創作者、媒體，提供專業的任務驅動媒合平台
           </p>
-          
+
           {/* Search Box */}
           <div className="max-w-2xl mx-auto mb-12">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
               <Input
-                placeholder="搜尋旅遊服務、創作者或媒體通路..."
+                placeholder="搜尋旅遊相關創作者、媒體、通路..."
                 className="pl-12 py-6 text-lg glass border-0 shadow-lg"
               />
               <Button size="lg" className="absolute right-2 top-1/2 transform -translate-y-1/2">
@@ -57,11 +89,11 @@ export default function Index() {
             </div>
             <div className="glass rounded-lg p-6">
               <div className="text-3xl font-bold mb-2 text-primary-foreground">8,500+</div>
-              <div className="text-lg text-primary-foreground/90">創作者影音素材數量</div>
+              <div className="text-lg text-primary-foreground/90">旅遊影響力數量</div>
             </div>
             <div className="glass rounded-lg p-6">
               <div className="text-3xl font-bold mb-2 text-primary-foreground">15.2M</div>
-              <div className="text-lg text-primary-foreground/90">媒體通路曝光數量</div>
+              <div className="text-lg text-primary-foreground/90">媒體通路覆蓋</div>
             </div>
           </div>
         </div>
@@ -73,7 +105,7 @@ export default function Index() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">選擇您的角色</h2>
             <p className="text-xl text-muted-foreground">
-              根據您的身分，進入專屬的服務區域
+              根據您的身份，進入專屬的解決方案
             </p>
           </div>
 
@@ -85,24 +117,24 @@ export default function Index() {
                 <div className="w-16 h-16 bg-gradient-supplier rounded-full flex items-center justify-center mx-auto mb-4">
                   <Building2 className="w-8 h-8 text-primary-foreground" />
                 </div>
-                <CardTitle className="text-2xl">旅遊服務供應商</CardTitle>
+                <CardTitle className="text-2xl">旅遊相關供應商</CardTitle>
                 <CardDescription className="text-base">
-                  上架旅遊產品，發布行銷任務，尋找創作者合作
+                  上架旅遊任務，發布行銷任務，尋找創作者
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center text-sm text-muted-foreground">
                     <div className="w-2 h-2 bg-primary rounded-full mr-2" />
-                    管理旅遊產品與介紹資料
+                    管理旅遊相關介紹資料
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <div className="w-2 h-2 bg-primary rounded-full mr-2" />
-                    發布行銷任務與需求
+                    發布行銷任務需求
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <div className="w-2 h-2 bg-primary rounded-full mr-2" />
-                    搜尋素材與聯繫創作者
+                    素材下載聯繫創作者
                   </div>
                 </div>
                 <div className="pt-4">
@@ -116,30 +148,30 @@ export default function Index() {
             </Card>
 
             {/* Creator Card */}
-            <Card className="relative overflow-hidden group hover:shadow-elegant transition-all duration-300 border-2 hover:border-secondary/20">
+            <Card className="relative overflow-hidden group hover:shadow-elegant transition-all duration-300 border-2 hover:border-primary/20">
               <div className="absolute inset-0 bg-gradient-creator opacity-5 group-hover:opacity-10 transition-opacity" />
               <CardHeader className="relative z-10 text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-creator rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="w-8 h-8 text-primary-foreground" />
                 </div>
-                <CardTitle className="text-2xl">創作者 / KOC</CardTitle>
+                <CardTitle className="text-2xl">內容創作者</CardTitle>
                 <CardDescription className="text-base">
-                  申請行銷任務，上傳創作素材，展示專業作品
+                  接取創作任務，展示作品集，建立合作關係
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <div className="w-2 h-2 bg-secondary rounded-full mr-2" />
-                    瀏覽並申請行銷任務
+                    <div className="w-2 h-2 bg-primary rounded-full mr-2" />
+                    瀏覽創作任務需求
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <div className="w-2 h-2 bg-secondary rounded-full mr-2" />
-                    上傳創作成果與素材
+                    <div className="w-2 h-2 bg-primary rounded-full mr-2" />
+                    上傳作品集展示
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <div className="w-2 h-2 bg-secondary rounded-full mr-2" />
-                    管理作品集與專長領域
+                    <div className="w-2 h-2 bg-primary rounded-full mr-2" />
+                    與供應商直接聯繫
                   </div>
                 </div>
                 <div className="pt-4">
@@ -153,7 +185,7 @@ export default function Index() {
             </Card>
 
             {/* Media Card */}
-            <Card className="relative overflow-hidden group hover:shadow-elegant transition-all duration-300 border-2 hover:border-purple-200">
+            <Card className="relative overflow-hidden group hover:shadow-elegant transition-all duration-300 border-2 hover:border-primary/20">
               <div className="absolute inset-0 bg-gradient-media opacity-5 group-hover:opacity-10 transition-opacity" />
               <CardHeader className="relative z-10 text-center pb-4">
                 <div className="w-16 h-16 bg-gradient-media rounded-full flex items-center justify-center mx-auto mb-4">
@@ -161,22 +193,22 @@ export default function Index() {
                 </div>
                 <CardTitle className="text-2xl">媒體通路</CardTitle>
                 <CardDescription className="text-base">
-                  搜尋授權素材，下載旅遊內容，聯繫供應商與創作者
+                  素材下載使用，內容傳播推廣，擴大影響力
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full mr-2" />
-                    搜尋與預覽旅遊素材
+                    <div className="w-2 h-2 bg-primary rounded-full mr-2" />
+                    下載高品質素材
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full mr-2" />
-                    下載授權素材內容
+                    <div className="w-2 h-2 bg-primary rounded-full mr-2" />
+                    內容傳播推廣
                   </div>
                   <div className="flex items-center text-sm text-muted-foreground">
-                    <div className="w-2 h-2 bg-purple-500 rounded-full mr-2" />
-                    聯繫供應商與創作者
+                    <div className="w-2 h-2 bg-primary rounded-full mr-2" />
+                    覆蓋廣大媒體平台
                   </div>
                 </div>
                 <div className="pt-4">
@@ -192,205 +224,66 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Featured Tasks */}
+      {/* Features Section */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-12">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">熱門行銷任務</h2>
-              <p className="text-muted-foreground">最新發布的優質行銷合作機會</p>
-            </div>
-            <Link to="/tasks">
-              <Button variant="outline">查看全部任務</Button>
-            </Link>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">平台特色</h2>
+            <p className="text-xl text-muted-foreground">
+              專業的旅遊行銷媒合平台，為產業提供最佳的合作夥伴
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                title: "台東海岸線深度體驗",
-                description: "需要旅遊部落客製作深度旅遊內容，包含圖文與短影音",
-                reward: "NT$ 15,000",
-                deadline: "2024-03-20",
-                location: "台東縣",
-                spec: "短影音 30-60秒｜9:16｜含拍攝與剪輯",
-                tags: ["旅遊", "影音", "部落格"]
-              },
-              {
-                title: "花蓮溫泉季宣傳",
-                description: "製作溫泉體驗相關的社群媒體內容",
-                reward: "NT$ 8,000",
-                deadline: "2024-03-15",
-                location: "花蓮縣",
-                spec: "圖片組 8-12張｜先修色｜1080x1350",
-                tags: ["溫泉", "社群", "攝影"]
-              },
-              {
-                title: "澎湖夏日活動推廣",
-                description: "水上活動與美食體驗的綜合性內容創作",
-                reward: "NT$ 20,000",
-                deadline: "2024-04-01",
-                location: "澎湖縣",
-                spec: "圖文長文 1 篇｜1200 字以上｜含 5-8 張圖",
-                tags: ["水上活動", "美食", "綜合"]
-              }
-            ].map((task, index) => (
-              <Card key={index} className="hover:shadow-card transition-shadow cursor-pointer">
-                <CardHeader>
-                  <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="text-lg leading-tight">{task.title}</CardTitle>
-                    <Badge variant="secondary" className="bg-success/10 text-success">
-                      {task.reward}
-                    </Badge>
-                  </div>
-                  <CardDescription className="line-clamp-2">
-                    {task.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <MapPin size={14} className="mr-1" />
-                    {task.location}
-                    <Calendar size={14} className="ml-4 mr-1" />
-                    {task.deadline}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    行銷素材類型與規格：{task.spec}
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {task.tags.map((tag, i) => (
-                      <Badge key={i} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Assets */}
-      <section className="py-20 px-4 bg-background">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-12">
-            <div>
-              <h2 className="text-3xl font-bold mb-2">精選創作素材</h2>
-              <p className="text-muted-foreground">高品質的旅遊行銷素材，立即取得授權使用</p>
-            </div>
-            <Link to="/assets">
-              <Button variant="outline">瀏覽素材庫</Button>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {[
-              {
-                title: "花蓮海岸日出攝影",
-                type: "圖片",
-                creator: "小明攝影",
-                downloads: 156,
-                rating: 4.8
-              },
-              {
-                title: "台南古蹟巡禮短片",
-                type: "影片",
-                creator: "旅遊達人Amy",
-                downloads: 89,
-                rating: 4.9
-              },
-              {
-                title: "墾丁夏日風情",
-                type: "圖片",
-                creator: "海洋攝手",
-                downloads: 234,
-                rating: 4.7
-              },
-              {
-                title: "阿里山雲海縮時",
-                type: "影片",
-                creator: "山景工作室",
-                downloads: 178,
-                rating: 4.9
-              }
-            ].map((asset, index) => (
-              <Card key={index} className="group hover:shadow-card transition-shadow cursor-pointer">
-                <div className="aspect-video bg-muted rounded-t-lg relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                    {asset.type === "圖片" ? (
-                      <Camera size={32} className="text-primary-foreground" />
-                    ) : (
-                      <FileText size={32} className="text-primary-foreground" />
-                    )}
-                  </div>
-                  <Badge className="absolute top-2 right-2 bg-primary/50 text-primary-foreground">
-                    {asset.type}
-                  </Badge>
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold mb-1 line-clamp-1">{asset.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">{asset.creator}</p>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <div className="flex items-center">
-                      <TrendingUp size={12} className="mr-1" />
-                      {asset.downloads} 下載
-                    </div>
-                    <div className="flex items-center">
-                      <Star size={12} className="mr-1 fill-yellow-400 text-yellow-400" />
-                      {asset.rating}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Success Stories */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-6">
-            <h2 className="text-3xl font-bold mb-2">成功案例</h2>
-            <p className="text-muted-foreground">目前尚無公開案例，以下為示意版面，待您提供資料即可替換。</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-lg border p-6 shadow-card bg-card">
-                <div className="text-sm text-muted-foreground mb-2">旅遊品牌 · 社群活動</div>
-                <h3 className="font-semibold mb-3">示意案例 {i}</h3>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• 觸及：—</li>
-                  <li>• 互動率：—</li>
-                  <li>• 內容形式：圖文 / 短影音</li>
-                </ul>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-primary" />
               </div>
-            ))}
+              <h3 className="text-xl font-semibold mb-2">智能媒合</h3>
+              <p className="text-muted-foreground">AI驅動的智能媒合系統，精準匹配需求與供給</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">數據分析</h3>
+              <p className="text-muted-foreground">完整的數據分析工具，追蹤合作效果與ROI</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">品質保證</h3>
+              <p className="text-muted-foreground">嚴格的品質審核機制，確保合作內容品質</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">社群支持</h3>
+              <p className="text-muted-foreground">活躍的創作者社群，持續學習與成長</p>
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-hero">
-        <div className="max-w-4xl mx-auto text-center text-primary-foreground">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            立即加入台灣旅遊行銷生態圈
-          </h2>
-          <p className="text-xl mb-8 text-primary-foreground/90">
-            無論您是旅遊業者、創作者或媒體，都能在這裡找到最佳的合作夥伴
+      <section className="py-20 px-4 bg-primary text-primary-foreground">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">開始您的旅遊行銷之旅</h2>
+          <p className="text-xl mb-8 opacity-90">
+            無論您是旅遊業者、創作者或媒體，都能在這裡找到最佳的合作伙伴
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/register">
-              <Button size="lg" className="bg-card text-primary hover:bg-card/90">
-                立即註冊
-              </Button>
-            </Link>
-            <Link to="/about">
-              <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10">
-                了解更多
-              </Button>
-            </Link>
+            <Button asChild size="lg" variant="secondary">
+              <Link to="/register">立即註冊</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/about">了解更多</Link>
+            </Button>
           </div>
         </div>
       </section>

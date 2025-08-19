@@ -3,8 +3,8 @@ import { SEO } from "@/components/SEO";
 import { suppliers } from "@/data/sample";
 
 const SuppliersList = () => {
-  const title = "供應商名錄 | 旅遊合作平台";
-  const description = "瀏覽旅遊服務供應商，查看合作/體驗方案與聯絡方式";
+  const title = "供應商列表 | 旅遊創作者平台";
+  const description = "瀏覽旅遊相關供應商資訊和聯絡方式";
 
   return (
     <main className="container py-10">
@@ -24,8 +24,8 @@ const SuppliersList = () => {
       />
 
       <header className="mb-6">
-        <h1 className="text-3xl font-bold">供應商名錄</h1>
-        <p className="text-muted-foreground mt-2">精選旅遊品牌與在地體驗</p>
+        <h1 className="text-3xl font-bold">供應商列表</h1>
+        <p className="text-muted-foreground mt-2">精選旅遊相關供應商</p>
       </header>
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

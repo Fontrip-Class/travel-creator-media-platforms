@@ -269,6 +269,8 @@ class DatabaseInitializer
             budget_min DECIMAL(10,2),
             budget_max DECIMAL(10,2),
             budget_type VARCHAR(20) DEFAULT 'fixed',
+            reward_type VARCHAR(20) DEFAULT 'money' CHECK (reward_type IN ('money', 'gift', 'experience')),
+            gift_details TEXT,
             location " . $this->getLocationType() . ",
             service_area " . $this->getArrayType() . ",
             content_type VARCHAR(50),

@@ -3,7 +3,7 @@
         'name' => 'travel-creator-media-platforms/backend',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '7db0abd59fef681de08fc61d4b9af7ccb8991c86',
+        'reference' => '000e09b879d9cb503b39235f1325121f882c6fe9',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -552,7 +552,7 @@
         'travel-creator-media-platforms/backend' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '7db0abd59fef681de08fc61d4b9af7ccb8991c86',
+            'reference' => '000e09b879d9cb503b39235f1325121f882c6fe9',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

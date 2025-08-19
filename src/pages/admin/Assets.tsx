@@ -1,21 +1,21 @@
-import { SEO } from "@/components/SEO";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const typeAccept: Record<string, string> = {
-  image: "image/jpeg, image/png, image/webp",
-  video: "video/mp4, video/quicktime",
+const typeAccept = {
+  image: "image/*",
+  video: "video/*"
 };
 
-export default function AssetsAdmin() {
-  return (
-    <div className="grid gap-6">
-      <SEO title="素材管理" description="創作者上架行銷素材與審核" />
+export default function Assets() {
+  const [assetType, setAssetType] = useState<string>("image");
 
+  return (
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="text-base">素材清單</CardTitle>
@@ -28,7 +28,7 @@ export default function AssetsAdmin() {
                 <SelectValue placeholder="類型" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="image">圖文</SelectItem>
+                <SelectItem value="image">圖片</SelectItem>
                 <SelectItem value="video">影音</SelectItem>
               </SelectContent>
             </Select>
@@ -39,7 +39,7 @@ export default function AssetsAdmin() {
               <SelectContent>
                 <SelectItem value="pending">待審</SelectItem>
                 <SelectItem value="approved">通過</SelectItem>
-                <SelectItem value="rejected">退回</SelectItem>
+                <SelectItem value="rejected">拒絕</SelectItem>
               </SelectContent>
             </Select>
             <Button>搜尋</Button>
@@ -56,8 +56,8 @@ export default function AssetsAdmin() {
               </TableHeader>
               <TableBody>
                 <TableRow>
-                  <TableCell>花蓮海岸日出照</TableCell>
-                  <TableCell>圖文</TableCell>
+                  <TableCell>花蓮海岸日出</TableCell>
+                  <TableCell>圖片</TableCell>
                   <TableCell>image/webp</TableCell>
                   <TableCell>待審</TableCell>
                 </TableRow>
@@ -69,17 +69,17 @@ export default function AssetsAdmin() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">上架素材（格式限制）</CardTitle>
+          <CardTitle className="text-base">上架素材（格式規範）</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>素材類型</Label>
-            <Select>
+            <Select value={assetType} onValueChange={setAssetType}>
               <SelectTrigger>
-                <SelectValue placeholder="選擇圖文/影音" />
+                <SelectValue placeholder="圖片/影音" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="image">圖文（{typeAccept.image}）</SelectItem>
+                <SelectItem value="image">圖片（{typeAccept.image}）</SelectItem>
                 <SelectItem value="video">影音（{typeAccept.video}）</SelectItem>
               </SelectContent>
             </Select>
@@ -90,27 +90,27 @@ export default function AssetsAdmin() {
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="a-desc">說明</Label>
-            <Input id="a-desc" placeholder="簡述內容、授權條件等" />
+            <Input id="a-desc" placeholder="簡述內容、版權、授權條件" />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="a-file">檔案（依類型限制格式）</Label>
+            <Label htmlFor="a-file">檔案（依類型限制大小）</Label>
             <Input id="a-file" type="file" accept={`${typeAccept.image}, ${typeAccept.video}`} />
           </div>
           <div className="space-y-2">
             <Label>審核狀態</Label>
             <Select>
               <SelectTrigger>
-                <SelectValue placeholder="待審/通過/退回" />
+                <SelectValue placeholder="待審/通過/拒絕" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="pending">待審</SelectItem>
                 <SelectItem value="approved">通過</SelectItem>
-                <SelectItem value="rejected">退回</SelectItem>
+                <SelectItem value="rejected">拒絕</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="md:col-span-2">
-            <Button>送出審核</Button>
+            <Button>提交審核</Button>
           </div>
         </CardContent>
       </Card>

@@ -9,14 +9,14 @@ const SupplierDetail = () => {
   if (!supplier) {
     return (
       <main className="container py-10">
-        <h1 className="text-2xl font-bold">找不到供應商</h1>
-        <Link to="/suppliers" className="text-sm text-primary mt-2 inline-block">返回名錄</Link>
+        <h1 className="text-2xl font-bold">供應商不存在</h1>
+        <Link to="/suppliers" className="text-sm text-primary mt-2 inline-block">返回供應商列表</Link>
       </main>
     );
   }
 
   const title = `${supplier.name} | 供應商詳情`;
-  const description = `${supplier.category}｜${supplier.location}｜聯絡：${supplier.contact}`;
+  const description = `${supplier.category}｜${supplier.location}｜聯絡人：${supplier.contact}`;
 
   return (
     <main className="container py-10">
@@ -48,14 +48,14 @@ const SupplierDetail = () => {
           <h3 className="font-semibold mb-2">聯絡方式</h3>
           {supplier.contact.startsWith("http") ? (
             <p className="text-sm">
-              官方網站：<a href={supplier.contact} target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">前往</a>
+              官方網站：<a href={supplier.contact} target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">點擊訪問</a>
             </p>
           ) : (
             <p className="text-sm">
               Email：<a href={`mailto:${supplier.contact}`} className="underline hover:text-primary">{supplier.contact}</a>
             </p>
           )}
-          <Link to="/suppliers" className="text-sm text-primary mt-4 inline-block">返回名錄</Link>
+          <Link to="/suppliers" className="text-sm text-primary mt-4 inline-block">返回供應商列表</Link>
         </aside>
       </section>
     </main>

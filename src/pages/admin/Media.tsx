@@ -1,4 +1,3 @@
-import { SEO } from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,11 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 export default function MediaAdmin() {
   return (
     <div className="grid gap-6">
-      <SEO title="媒體管理" description="管理媒體基本資料與聯絡方式" />
-
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">搜尋與清單</CardTitle>
+          <CardTitle className="text-base">媒體搜尋</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-4">
@@ -42,9 +39,9 @@ export default function MediaAdmin() {
               </TableHeader>
               <TableBody>
                 <TableRow>
-                  <TableCell>旅遊日報</TableCell>
+                  <TableCell>台灣日報</TableCell>
                   <TableCell>新聞</TableCell>
-                  <TableCell>林小姐</TableCell>
+                  <TableCell>張記者</TableCell>
                 </TableRow>
               </TableBody>
             </Table>

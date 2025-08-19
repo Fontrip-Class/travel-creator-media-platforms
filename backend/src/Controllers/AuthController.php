@@ -34,6 +34,48 @@ class AuthController
         }
     }
 
+    public function checkUsernameAvailability(Request $request, Response $response): Response
+    {
+        try {
+            $data = $request->getParsedBody();
+            
+            if (empty($data['username'])) {
+                return $this->apiResponse->error($response, '用戶名不能為空', 400);
+            }
+            
+            $isAvailable = $this->authService->isUsernameAvailable($data['username']);
+            
+            return $this->apiResponse->success($response, [
+                'available' => $isAvailable,
+                'username' => $data['username']
+            ], $isAvailable ? '用戶名可用' : '用戶名已被使用');
+            
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
+    public function checkEmailAvailability(Request $request, Response $response): Response
+    {
+        try {
+            $data = $request->getParsedBody();
+            
+            if (empty($data['email'])) {
+                return $this->apiResponse->error($response, '郵箱不能為空', 400);
+            }
+            
+            $isAvailable = $this->authService->isEmailAvailable($data['email']);
+            
+            return $this->apiResponse->success($response, [
+                'available' => $isAvailable,
+                'email' => $data['email']
+            ], $isAvailable ? '郵箱可用' : '郵箱已被註冊');
+            
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
     public function login(Request $request, Response $response): Response
     {
         try {

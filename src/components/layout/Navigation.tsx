@@ -1,92 +1,108 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { 
-  Building2, 
-  Users, 
-  Newspaper, 
-  Menu, 
-  X, 
-  User, 
-  Settings, 
-  LogOut,
-  Plus,
-  Shield
-} from "lucide-react";
-import { apiService } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import type { UserRolesSummary, BusinessManagementSummary } from "@/types/database";
+import {
+    BarChart3,
+    Building2,
+    FileText,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    Newspaper,
+    Plus,
+    PlusCircle,
+    Settings,
+    Shield,
+    User,
+    Users,
+    X
+} from "lucide-react";
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRoles, setUserRoles] = useState<UserRolesSummary[]>([]);
-  const [businessEntities, setBusinessEntities] = useState<BusinessManagementSummary[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
 
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
+  const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        setIsAuthenticated(true);
-        await loadUserData();
-      }
+      await logout();
+      navigate('/');
+      toast({
+        title: "登出成功",
+        description: "您已成功登出",
+      });
     } catch (error) {
-      console.error('檢查認證狀態失敗:', error);
-    } finally {
-      setIsLoading(false);
+      toast({
+        title: "登出失敗",
+        description: "請重新嘗試",
+        variant: "destructive"
+      });
     }
   };
 
-  const loadUserData = async () => {
-    try {
-      const userId = localStorage.getItem('user_id');
-      if (!userId) return;
-
-      // 載入用戶角色
-      const rolesResponse = await apiService.getUserRolesSummary(userId);
-      if (rolesResponse.success) {
-        setUserRoles(rolesResponse.data);
-      }
-
-      // 載入業務實體
-      const entitiesResponse = await apiService.getBusinessManagementSummary(userId);
-      if (entitiesResponse.success) {
-        setBusinessEntities(entitiesResponse.data);
-      }
-    } catch (error) {
-      console.error('載入用戶資料失敗:', error);
+  // 獲取用戶角色對應的儀表板路徑
+  const getDashboardPath = (role: string) => {
+    switch (role) {
+      case 'supplier':
+        return '/supplier/dashboard';
+      case 'creator':
+        return '/creator/dashboard';
+      case 'media':
+        return '/media/dashboard';
+      case 'admin':
+        return '/admin/dashboard';
+      default:
+        return '/';
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('user_role');
-    setIsAuthenticated(false);
-    setUserRoles([]);
-    setBusinessEntities([]);
-    navigate('/');
-    toast({
-      title: "登出成功",
-      description: "您已成功登出",
-    });
+  // 獲取用戶角色對應的主要功能
+  const getRoleFeatures = (role: string) => {
+    switch (role) {
+      case 'supplier':
+        return [
+          { path: '/supplier/dashboard', label: '供應商儀表板', icon: LayoutDashboard },
+          { path: '/supplier/create-task', label: '發布任務', icon: PlusCircle },
+          { path: '/supplier/tasks', label: '我的任務', icon: FileText },
+          { path: '/supplier/analytics', label: '數據分析', icon: BarChart3 }
+        ];
+      case 'creator':
+        return [
+          { path: '/creator/dashboard', label: '創作者儀表板', icon: LayoutDashboard },
+          { path: '/creator/portfolio', label: '作品集', icon: FileText },
+          { path: '/creator/tasks', label: '可接任務', icon: PlusCircle },
+          { path: '/creator/applications', label: '我的申請', icon: BarChart3 }
+        ];
+      case 'media':
+        return [
+          { path: '/media/dashboard', label: '媒體儀表板', icon: LayoutDashboard },
+          { path: '/media/assets', label: '媒體資產', icon: FileText },
+          { path: '/media/publications', label: '發布管理', icon: PlusCircle },
+          { path: '/media/analytics', label: '數據分析', icon: BarChart3 }
+        ];
+      case 'admin':
+        return [
+          { path: '/admin/dashboard', label: '管理後台', icon: Shield },
+          { path: '/admin/users', label: '用戶管理', icon: Users },
+          { path: '/admin/tasks', label: '任務管理', icon: FileText },
+          { path: '/admin/analytics', label: '系統分析', icon: BarChart3 }
+        ];
+      default:
+        return [];
+    }
   };
 
   const getRoleIcon = (roleName: string) => {
@@ -115,27 +131,13 @@ export default function Navigation() {
       case 'admin':
         return '管理員';
       default:
-        return roleName;
+        return '用戶';
     }
   };
 
   const isActiveRoute = (path: string) => {
     return location.pathname === path;
   };
-
-  if (isLoading) {
-    return (
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
-            </div>
-          </div>
-        </div>
-      </nav>
-    );
-  }
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -152,129 +154,141 @@ export default function Navigation() {
           </div>
 
           {/* 桌面版導航 */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link
-              to="/"
-              className={`text-sm font-medium transition-colors hover:text-blue-600 ${
-                isActiveRoute('/') ? 'text-blue-600' : 'text-gray-700'
-              }`}
-            >
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/" className={`text-sm font-medium ${isActiveRoute('/') ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}>
               首頁
             </Link>
-            
-            <Link
-              to="/suppliers"
-              className={`text-sm font-medium transition-colors hover:text-blue-600 ${
-                isActiveRoute('/suppliers') ? 'text-blue-600' : 'text-gray-700'
-              }`}
-            >
-              供應商
-            </Link>
-            
-            <Link
-              to="/creators"
-              className={`text-sm font-medium transition-colors hover:text-blue-600 ${
-                isActiveRoute('/creators') ? 'text-blue-600' : 'text-gray-700'
-              }`}
-            >
-              創作者
-            </Link>
-            
-            <Link
-              to="/media"
-              className={`text-sm font-medium transition-colors hover:text-blue-600 ${
-                isActiveRoute('/media') ? 'text-blue-600' : 'text-gray-700'
-              }`}
-            >
-              媒體
-            </Link>
-            
-            <Link
-              to="/portfolio"
-              className={`text-sm font-medium transition-colors hover:text-blue-600 ${
-                isActiveRoute('/portfolio') ? 'text-blue-600' : 'text-gray-700'
-              }`}
-            >
-              作品集
-            </Link>
+
+            {/* 根據用戶角色顯示主要功能 */}
+            {isAuthenticated && user?.role && (
+              <>
+                <Link
+                  to={getDashboardPath(user.role)}
+                  className={`text-sm font-medium flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+                    location.pathname.startsWith(getDashboardPath(user.role))
+                      ? 'text-primary bg-primary/10'
+                      : 'text-gray-700 hover:text-primary hover:bg-gray-50'
+                  }`}
+                >
+                  {getRoleIcon(user.role)}
+                  我的工作台
+                </Link>
+
+                {/* 快速功能入口 */}
+                {user.role === 'supplier' && (
+                  <Link
+                    to="/supplier/create-task"
+                    className="text-sm font-medium text-gray-700 hover:text-primary flex items-center gap-1"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    發布任務
+                  </Link>
+                )}
+
+                {user.role === 'creator' && (
+                  <Link
+                    to="/tasks"
+                    className="text-sm font-medium text-gray-700 hover:text-primary flex items-center gap-1"
+                  >
+                    <FileText className="w-4 h-4" />
+                    瀏覽任務
+                  </Link>
+                )}
+
+                {user.role === 'admin' && (
+                  <Link
+                    to="/admin/dashboard"
+                    className="text-sm font-medium text-gray-700 hover:text-primary flex items-center gap-1"
+                  >
+                    <Shield className="w-4 h-4" />
+                    管理後台
+                  </Link>
+                )}
+              </>
+            )}
+
+            {!isAuthenticated && (
+              <>
+                <Link to="/suppliers" className={`text-sm font-medium ${isActiveRoute('/suppliers') ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}>
+                  供應商
+                </Link>
+                <Link to="/creators" className={`text-sm font-medium ${isActiveRoute('/creators') ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}>
+                  創作者
+                </Link>
+                <Link to="/media" className={`text-sm font-medium ${isActiveRoute('/media') ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}>
+                  媒體
+                </Link>
+              </>
+            )}
           </div>
 
           {/* 用戶選單 */}
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                {/* 業務實體管理按鈕 */}
-                {businessEntities.length > 0 && (
-                  <Link to="/business-entities">
-                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4" />
-                      業務管理
-                    </Button>
-                  </Link>
-                )}
-
                 {/* 用戶下拉選單 */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center space-x-2">
                       <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">U</span>
+                        <span className="text-white font-bold text-sm">
+                          {user?.username?.charAt(0).toUpperCase() || 'U'}
+                        </span>
                       </div>
-                      <span className="hidden sm:block text-sm font-medium">用戶</span>
+                      <div className="hidden sm:flex flex-col items-start">
+                        <span className="text-sm font-medium">{user?.username || '用戶'}</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {getRoleLabel(user?.role || '')}
+                        </Badge>
+                      </div>
                     </Button>
                   </DropdownMenuTrigger>
-                  
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuLabel>用戶資訊</DropdownMenuLabel>
+
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel className="flex items-center gap-2">
+                      {getRoleIcon(user?.role || '')}
+                      {user?.username || '用戶'}
+                      <Badge variant="outline" className="ml-auto text-xs">
+                        {getRoleLabel(user?.role || '')}
+                      </Badge>
+                    </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    
-                    {/* 用戶角色 */}
-                    {userRoles.length > 0 && (
+
+                    {/* 角色專用功能 */}
+                    {user?.role && (
                       <>
-                        <DropdownMenuLabel className="text-xs text-gray-500">
-                          角色
+                        <DropdownMenuLabel className="text-xs text-muted-foreground">
+                          我的工作區
                         </DropdownMenuLabel>
-                        {userRoles.map((role) => (
-                          <DropdownMenuItem key={role.user_role_id} className="flex items-center gap-2">
-                            {getRoleIcon(role.role_name)}
-                            <span>{getRoleLabel(role.role_name)}</span>
+                        {getRoleFeatures(user.role).map((feature, index) => (
+                          <DropdownMenuItem key={index} asChild>
+                            <Link to={feature.path} className="flex items-center gap-2">
+                              <feature.icon className="w-4 h-4" />
+                              {feature.label}
+                            </Link>
                           </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
                       </>
                     )}
 
-                    {/* 業務實體 */}
-                    {businessEntities.length > 0 && (
-                      <>
-                        <DropdownMenuLabel className="text-xs text-gray-500">
-                          業務實體
-                        </DropdownMenuLabel>
-                        {businessEntities.slice(0, 3).map((entity) => (
-                          <DropdownMenuItem key={entity.business_entity_id} className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4" />
-                            <span className="truncate">{entity.business_entity_name}</span>
-                          </DropdownMenuItem>
-                        ))}
-                        {businessEntities.length > 3 && (
-                          <DropdownMenuItem className="text-xs text-gray-500">
-                            還有 {businessEntities.length - 3} 個業務實體...
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
-
-                    {/* 功能選單 */}
+                    {/* 通用功能 */}
                     <DropdownMenuItem asChild>
-                      <Link to="/notifications" className="flex items-center gap-2">
+                      <Link to="/profile" className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        個人資料
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings" className="flex items-center gap-2">
                         <Settings className="w-4 h-4" />
-                        通知設定
+                        設定
                       </Link>
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
-                    
+
                     <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                       <LogOut className="w-4 h-4 mr-2" />
                       登出
@@ -313,68 +327,69 @@ export default function Navigation() {
 
         {/* 手機版導航選單 */}
         {isMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
+          <div className="md:hidden border-t">
+            <div className="px-2 pt-2 pb-3 space-y-1">
               <Link
                 to="/"
                 className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActiveRoute('/') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                  isActiveRoute('/') ? 'text-primary bg-primary/10' : 'text-gray-700 hover:text-primary hover:bg-gray-50'
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 首頁
               </Link>
-              
-              <Link
-                to="/suppliers"
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActiveRoute('/suppliers') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                }`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                供應商
-              </Link>
-              
-              <Link
-                to="/creators"
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActiveRoute('/creators') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                }`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                創作者
-              </Link>
-              
-              <Link
-                to="/media"
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActiveRoute('/media') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                }`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                媒體
-              </Link>
-              
-              <Link
-                to="/portfolio"
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActiveRoute('/portfolio') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                }`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                作品集
-              </Link>
 
-              {isAuthenticated && businessEntities.length > 0 && (
-                <Link
-                  to="/business-entities"
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    isActiveRoute('/business-entities') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  業務管理
-                </Link>
+              {/* 已登入用戶的角色功能 */}
+              {isAuthenticated && user?.role ? (
+                <>
+                  <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    我的工作區
+                  </div>
+                  {getRoleFeatures(user.role).map((feature, index) => (
+                    <Link
+                      key={index}
+                      to={feature.path}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium ${
+                        isActiveRoute(feature.path) ? 'text-primary bg-primary/10' : 'text-gray-700 hover:text-primary hover:bg-gray-50'
+                      }`}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <feature.icon className="w-4 h-4" />
+                      {feature.label}
+                    </Link>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {/* 未登入用戶的一般導航 */}
+                  <Link
+                    to="/suppliers"
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                      isActiveRoute('/suppliers') ? 'text-primary bg-primary/10' : 'text-gray-700 hover:text-primary hover:bg-gray-50'
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    供應商
+                  </Link>
+                  <Link
+                    to="/creators"
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                      isActiveRoute('/creators') ? 'text-primary bg-primary/10' : 'text-gray-700 hover:text-primary hover:bg-gray-50'
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    創作者
+                  </Link>
+                  <Link
+                    to="/media"
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                      isActiveRoute('/media') ? 'text-primary bg-primary/10' : 'text-gray-700 hover:text-primary hover:bg-gray-50'
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    媒體
+                  </Link>
+                </>
               )}
             </div>
           </div>

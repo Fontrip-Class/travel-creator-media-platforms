@@ -1,39 +1,48 @@
-import { useParams } from "react-router-dom";
+import { useState } from "react";
 import { SEO } from "@/components/SEO";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, MapPin, DollarSign, User, Clock, FileText } from "lucide-react";
+import { DollarSign, User, Calendar, MapPin, Clock, FileText, Send } from "lucide-react";
 
 export default function TaskDetail() {
-  const { id } = useParams();
+  const [isApplying, setIsApplying] = useState(false);
 
   // 模擬任務數據
   const task = {
-    id: id,
-    title: "台東季節活動宣傳",
-    status: "公開招募",
-    description: "需要為台東秋季觀光活動製作宣傳素材，包含風景攝影、美食拍攝及短影音製作。希望能突出台東在地文化特色，吸引年輕族群關注。",
+    id: "1",
+    title: "台東秋季觀光活動宣傳",
+    status: "徵集中",
+    description: "需要為台東秋季觀光活動製作宣傳素材，包含風景攝影、美食攝影、影片製作。希望能突出台東當地的特色，吸引年輕族群關注。",
     reward: 15000,
     deadline: "2024-12-31",
     location: "台東縣",
     publisher: "台東縣政府觀光處",
     publishDate: "2024-11-15",
-    requirements: ["圖文創作", "短影音製作", "攝影"],
-    mediaTypes: ["圖片", "影片", "文案"],
+    requirements: ["攝影技巧", "影片製作", "攝影"],
+    mediaTypes: ["照片", "影片", "攝影"],
     applicantCount: 5,
     maxApplicants: 10
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "公開招募": return "bg-green-100 text-green-800";
+      case "徵集中": return "bg-green-100 text-green-800";
       case "審核中": return "bg-yellow-100 text-yellow-800";
       case "進行中": return "bg-blue-100 text-blue-800";
       case "已完成": return "bg-gray-100 text-gray-800";
       default: return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const handleApply = async () => {
+    setIsApplying(true);
+    // 模擬申請過程
+    setTimeout(() => {
+      setIsApplying(false);
+      alert("申請已提交！");
+    }, 2000);
   };
 
   return (
@@ -44,7 +53,7 @@ export default function TaskDetail() {
       />
 
       <div className="grid gap-6">
-        {/* 主要任務資訊 */}
+        {/* 主要任務資料 */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-start">
@@ -63,7 +72,7 @@ export default function TaskDetail() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* 基本資訊 */}
+            {/* 基本資料 */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="flex items-center text-muted-foreground">
                 <User className="w-4 h-4 mr-2" />
@@ -79,7 +88,7 @@ export default function TaskDetail() {
               </div>
               <div className="flex items-center text-muted-foreground">
                 <Clock className="w-4 h-4 mr-2" />
-                <span>發布時間：{task.publishDate}</span>
+                <span>發布日期：{task.publishDate}</span>
               </div>
             </div>
 
@@ -118,41 +127,25 @@ export default function TaskDetail() {
 
             <Separator />
 
-            {/* 申請狀況 */}
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                目前申請人數：{task.applicantCount} / {task.maxApplicants}
-              </div>
-              <div className="space-x-3">
-                <Button variant="outline">收藏任務</Button>
-                <Button>立即申請</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 相關任務推薦 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">相關推薦任務</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
-                <h4 className="font-semibold mb-2">花蓮海岸風景攝影</h4>
-                <p className="text-sm text-muted-foreground mb-2">拍攝花蓮七星潭、太魯閣等知名景點</p>
-                <div className="flex justify-between items-center">
-                  <Badge className="bg-green-100 text-green-800">公開招募</Badge>
-                  <span className="text-sm font-semibold">NT$ 12,000</span>
+            {/* 申請狀態 */}
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-blue-800">
+                    已申請：{task.applicantCount} / {task.maxApplicants}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    還有 {task.maxApplicants - task.applicantCount} 個名額
+                  </p>
                 </div>
-              </div>
-              <div className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
-                <h4 className="font-semibold mb-2">南投山區美食探索</h4>
-                <p className="text-sm text-muted-foreground mb-2">製作南投在地美食短影音內容</p>
-                <div className="flex justify-between items-center">
-                  <Badge className="bg-green-100 text-green-800">公開招募</Badge>
-                  <span className="text-sm font-semibold">NT$ 18,000</span>
-                </div>
+                <Button 
+                  onClick={handleApply}
+                  disabled={isApplying || task.applicantCount >= task.maxApplicants}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  {isApplying ? "申請中..." : "立即申請"}
+                </Button>
               </div>
             </div>
           </CardContent>

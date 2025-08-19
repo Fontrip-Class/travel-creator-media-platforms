@@ -9,14 +9,14 @@ const MediaDetail = () => {
   if (!media) {
     return (
       <main className="container py-10">
-        <h1 className="text-2xl font-bold">找不到媒體</h1>
-        <Link to="/media" className="text-sm text-primary mt-2 inline-block">返回名錄</Link>
+        <h1 className="text-2xl font-bold">媒體不存在</h1>
+        <Link to="/media" className="text-sm text-primary mt-2 inline-block">返回媒體列表</Link>
       </main>
     );
   }
 
   const title = `${media.name} | 媒體詳情`;
-  const description = `${media.type}｜觸及：${media.reach}｜聯絡：${media.contact}`;
+  const description = `${media.type}｜觸及人數：${media.reach}｜聯絡人：${media.contact}`;
 
   return (
     <main className="container py-10">
@@ -34,7 +34,7 @@ const MediaDetail = () => {
 
       <header className="mb-6">
         <h1 className="text-3xl font-bold">{media.name}</h1>
-        <p className="text-muted-foreground mt-2">{media.type} · 觸及：{media.reach}</p>
+        <p className="text-muted-foreground mt-2">{media.type} · 觸及人數：{media.reach}</p>
       </header>
 
       <section className="grid gap-6 md:grid-cols-3">
@@ -45,7 +45,7 @@ const MediaDetail = () => {
         <aside className="p-6 rounded-xl border">
           <h3 className="font-semibold mb-2">聯絡</h3>
           <p className="text-sm">Email：{media.contact}</p>
-          <Link to="/media" className="text-sm text-primary mt-4 inline-block">返回名錄</Link>
+          <Link to="/media" className="text-sm text-primary mt-4 inline-block">返回媒體列表</Link>
         </aside>
       </section>
     </main>

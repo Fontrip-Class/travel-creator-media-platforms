@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertCircle, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './alert';
 import { Button } from './button';
@@ -11,9 +10,9 @@ export interface ErrorDisplayProps {
   className?: string;
 }
 
-export function ErrorDisplay({ 
-  error, 
-  onDismiss, 
+export function ErrorDisplay({
+  error,
+  onDismiss,
   variant = 'destructive',
   showIcon = true,
   className = ''
@@ -49,21 +48,21 @@ export function ErrorDisplay({
   );
 }
 
-// 專門用於API錯誤的組件
-export function ApiErrorDisplay({ 
-  error, 
+// 專門用於API錯誤處理
+export function ApiErrorDisplay({
+  error,
   onDismiss,
   className = ''
 }: Omit<ErrorDisplayProps, 'variant'>) {
   if (!error) return null;
 
-  // 根據錯誤類型選擇不同的樣式
+  // 根據錯誤類型選擇不同樣式
   let variant: 'default' | 'destructive' | 'warning' = 'destructive';
   let title = '發生錯誤';
-  
+
   if (error.includes('網絡連接失敗') || error.includes('Connection')) {
     variant = 'warning';
-    title = '連接問題';
+    title = '連接失敗';
   } else if (error.includes('驗證') || error.includes('Validation')) {
     variant = 'default';
     title = '輸入驗證錯誤';
@@ -82,9 +81,9 @@ export function ApiErrorDisplay({
   );
 }
 
-// 專門用於表單驗證錯誤的組件
-export function ValidationErrorDisplay({ 
-  errors, 
+// 專門用於表單驗證錯誤處理
+export function ValidationErrorDisplay({
+  errors,
   onDismiss,
   className = ''
 }: {
@@ -105,7 +104,7 @@ export function ValidationErrorDisplay({
           <AlertCircle className="h-4 w-4 mt-0.5" />
           <div className="flex-1">
             <AlertTitle className="text-sm font-medium">
-              請修正以下問題
+              請修正以下錯誤
             </AlertTitle>
             <AlertDescription className="text-sm mt-1">
               <ul className="list-disc list-inside space-y-1">

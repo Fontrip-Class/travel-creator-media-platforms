@@ -2,296 +2,152 @@
 
 namespace App\Services;
 
-use PDO;
-
 /**
- * 權限檢查服務
- * 實現簡化後的manager和user兩種權限等級的檢查邏輯
+ * 權限管理服務 - 統一處理用戶權限檢查
  */
 class PermissionService
 {
-    private PDO $pdo;
+    private DatabaseService $db;
 
-    public function __construct(PDO $pdo)
+    public function __construct(DatabaseService $db)
     {
-        $this->pdo = $pdo;
+        $this->db = $db;
     }
 
     /**
-     * 檢查用戶是否有權限管理特定業務實體
+     * 檢查用戶是否有特定權限
      */
-    public function canManageBusinessEntity(
-        string $userId, 
-        string $businessEntityId, 
-        string $permission
-    ): bool {
-        $stmt = $this->pdo->prepare("
-            SELECT permission_level, can_manage_users, can_manage_content, 
-                   can_manage_finance, can_view_analytics, can_edit_profile
-            FROM user_business_permissions
-            WHERE user_id = ? AND business_entity_id = ? AND is_active = TRUE
-        ");
-        
-        $stmt->execute([$userId, $businessEntityId]);
-        $permissions = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$permissions) {
+    public function hasPermission(string $userId, string $resource, string $action, ?string $resourceId = null): bool
+    {
+        $user = $this->db->fetchOne('SELECT * FROM users WHERE id = :id', ['id' => $userId]);
+        if (!$user || !$user['is_active']) {
             return false;
         }
-        
-        // 管理者擁有所有權限
-        if ($permissions['permission_level'] === 'manager') {
+
+        // 檢查用戶是否被暫停（如果欄位存在）
+        if (isset($user['is_suspended']) && $user['is_suspended']) {
+            return false;
+        }
+
+        // 管理員有所有權限
+        if ($user['role'] === 'admin') {
             return true;
         }
-        
-        // 一般使用者根據具體權限進行檢查
-        switch ($permission) {
-            case 'manage_users':
-                return $permissions['can_manage_users'];
-            case 'manage_content':
-                return $permissions['can_manage_content'];
-            case 'manage_finance':
-                return $permissions['can_manage_finance'];
-            case 'view_analytics':
-                return $permissions['can_view_analytics'];
-            case 'edit_profile':
-                return $permissions['can_edit_profile'];
+
+        return $this->checkResourcePermission($userId, $user['role'], $resource, $action, $resourceId);
+    }
+
+    /**
+     * 檢查資源權限
+     */
+    private function checkResourcePermission(string $userId, string $userRole, string $resource, string $action, ?string $resourceId): bool
+    {
+        switch ($resource) {
+            case 'user':
+                return $this->checkUserPermission($userId, $userRole, $action, $resourceId);
+            case 'task':
+                return $this->checkTaskPermission($userId, $userRole, $action, $resourceId);
+            case 'business_entity':
+                return $this->checkBusinessEntityPermission($userId, $userRole, $action, $resourceId);
             default:
                 return false;
         }
     }
 
     /**
-     * 獲取用戶在特定業務實體中的權限等級和詳細權限
+     * 檢查用戶權限
      */
-    public function getUserPermissionLevel(string $userId, string $businessEntityId): ?array
+    private function checkUserPermission(string $userId, string $userRole, string $action, ?string $targetUserId): bool
     {
-        $stmt = $this->pdo->prepare("
-            SELECT permission_level, can_manage_users, can_manage_content, 
-                   can_manage_finance, can_view_analytics, can_edit_profile
-            FROM user_business_permissions
-            WHERE user_id = ? AND business_entity_id = ? AND is_active = TRUE
-        ");
-        
-        $stmt->execute([$userId, $businessEntityId]);
-        $permissions = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$permissions) {
-            return null;
-        }
-        
-        return [
-            'permission_level' => $permissions['permission_level'],
-            'permissions' => [
-                'can_manage_users' => $permissions['can_manage_users'],
-                'can_manage_content' => $permissions['can_manage_content'],
-                'can_manage_finance' => $permissions['can_manage_finance'],
-                'can_view_analytics' => $permissions['can_view_analytics'],
-                'can_edit_profile' => $permissions['can_edit_profile']
-            ]
-        ];
-    }
-
-    /**
-     * 獲取用戶在特定業務實體中的所有權限
-     */
-    public function getUserPermissions(string $userId, string $businessEntityId): array
-    {
-        $stmt = $this->pdo->prepare("
-            SELECT * FROM user_business_permissions
-            WHERE user_id = ? AND business_entity_id = ? AND is_active = TRUE
-        ");
-        
-        $stmt->execute([$userId, $businessEntityId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * 檢查用戶是否可以編輯業務實體資料
-     */
-    public function canEditBusinessEntityProfile(string $userId, string $businessEntityId): bool
-    {
-        return $this->canManageBusinessEntity($userId, $businessEntityId, 'edit_profile');
-    }
-
-    /**
-     * 檢查用戶是否可以管理其他用戶
-     */
-    public function canManageUsers(string $userId, string $businessEntityId): bool
-    {
-        return $this->canManageBusinessEntity($userId, $businessEntityId, 'manage_users');
-    }
-
-    /**
-     * 檢查用戶是否可以管理內容
-     */
-    public function canManageContent(string $userId, string $businessEntityId): bool
-    {
-        return $this->canManageBusinessEntity($userId, $businessEntityId, 'manage_content');
-    }
-
-    /**
-     * 檢查用戶是否可以管理財務
-     */
-    public function canManageFinance(string $userId, string $businessEntityId): bool
-    {
-        return $this->canManageBusinessEntity($userId, $businessEntityId, 'manage_finance');
-    }
-
-    /**
-     * 檢查用戶是否可以查看分析數據
-     */
-    public function canViewAnalytics(string $userId, string $businessEntityId): bool
-    {
-        return $this->canManageBusinessEntity($userId, $businessEntityId, 'view_analytics');
-    }
-
-    /**
-     * 檢查用戶是否為業務實體的管理者
-     */
-    public function isBusinessEntityManager(string $userId, string $businessEntityId): bool
-    {
-        $stmt = $this->pdo->prepare("
-            SELECT COUNT(*) FROM user_business_permissions
-            WHERE user_id = ? AND business_entity_id = ? 
-            AND permission_level = 'manager' AND is_active = TRUE
-        ");
-        
-        $stmt->execute([$userId, $businessEntityId]);
-        return $stmt->fetchColumn() > 0;
-    }
-
-    /**
-     * 檢查用戶是否為業務實體的一般使用者
-     */
-    public function isBusinessEntityUser(string $userId, string $businessEntityId): bool
-    {
-        $stmt = $this->pdo->prepare("
-            SELECT COUNT(*) FROM user_business_permissions
-            WHERE user_id = ? AND business_entity_id = ? 
-            AND permission_level = 'user' AND is_active = TRUE
-        ");
-        
-        $stmt->execute([$userId, $businessEntityId]);
-        return $stmt->fetchColumn() > 0;
-    }
-
-    /**
-     * 獲取用戶管理的所有業務實體
-     */
-    public function getUserManagedBusinessEntities(string $userId): array
-    {
-        $stmt = $this->pdo->prepare("
-            SELECT be.id, be.name, be.business_type, be.status,
-                   ubp.permission_level, ubp.can_manage_users, ubp.can_manage_content,
-                   ubp.can_manage_finance, ubp.can_view_analytics, ubp.can_edit_profile
-            FROM business_entities be
-            JOIN user_business_permissions ubp ON be.id = ubp.business_entity_id
-            WHERE ubp.user_id = ? AND ubp.is_active = TRUE
-            ORDER BY be.name
-        ");
-        
-        $stmt->execute([$userId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * 獲取業務實體的所有管理者和使用者
-     */
-    public function getBusinessEntityUsers(string $businessEntityId): array
-    {
-        $stmt = $this->pdo->prepare("
-            SELECT u.id, u.username, u.email, u.first_name, u.last_name,
-                   r.name as role_name, r.display_name as role_display_name,
-                   ubp.permission_level, ubp.can_manage_users, ubp.can_manage_content,
-                   ubp.can_manage_finance, ubp.can_view_analytics, ubp.can_edit_profile,
-                   ubp.granted_at, ubp.is_active
-            FROM user_business_permissions ubp
-            JOIN users u ON ubp.user_id = u.id
-            JOIN roles r ON ubp.role_id = r.id
-            WHERE ubp.business_entity_id = ? AND ubp.is_active = TRUE
-            ORDER BY ubp.permission_level DESC, u.username
-        ");
-        
-        $stmt->execute([$businessEntityId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * 分配業務實體權限
-     */
-    public function assignBusinessEntityPermission(array $permissionData): bool
-    {
-        try {
-            $stmt = $this->pdo->prepare("
-                INSERT INTO user_business_permissions 
-                (user_id, business_entity_id, role_id, permission_level,
-                 can_manage_users, can_manage_content, can_manage_finance,
-                 can_view_analytics, can_edit_profile, is_active, granted_at, granted_by)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, CURRENT_TIMESTAMP, ?)
-            ");
-            
-            return $stmt->execute([
-                $permissionData['user_id'],
-                $permissionData['business_entity_id'],
-                $permissionData['role_id'],
-                $permissionData['permission_level'],
-                $permissionData['can_manage_users'] ?? false,
-                $permissionData['can_manage_content'] ?? false,
-                $permissionData['can_manage_finance'] ?? false,
-                $permissionData['can_view_analytics'] ?? false,
-                $permissionData['can_edit_profile'] ?? true,
-                $permissionData['granted_by']
-            ]);
-        } catch (\Exception $e) {
-            error_log("分配業務實體權限失敗: " . $e->getMessage());
-            return false;
+        switch ($action) {
+            case 'view':
+                // 允許查看自己的資料，或者管理員查看所有，或者供應商查看基本用戶列表
+                if ($targetUserId === null) {
+                    // 查看用戶列表 - 放寬權限讓供應商也能查看
+                    return in_array($userRole, ['admin', 'supplier', 'creator', 'media']);
+                }
+                return $targetUserId === $userId || $userRole === 'admin';
+            case 'edit':
+                return $targetUserId === $userId || $userRole === 'admin';
+            case 'create':
+                // 放寬創建權限，讓供應商也能創建用戶（例如邀請創作者）
+                return in_array($userRole, ['admin', 'supplier']);
+            case 'delete':
+            case 'manage':
+                return $userRole === 'admin';
+            default:
+                return false;
         }
     }
 
     /**
-     * 更新業務實體權限
+     * 檢查任務權限
      */
-    public function updateBusinessEntityPermission(string $permissionId, array $permissionData): bool
+    private function checkTaskPermission(string $userId, string $userRole, string $action, ?string $taskId): bool
     {
-        try {
-            $stmt = $this->pdo->prepare("
-                UPDATE user_business_permissions 
-                SET permission_level = ?, can_manage_users = ?, can_manage_content = ?,
-                    can_manage_finance = ?, can_view_analytics = ?, can_edit_profile = ?,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            ");
-            
-            return $stmt->execute([
-                $permissionData['permission_level'],
-                $permissionData['can_manage_users'] ?? false,
-                $permissionData['can_manage_content'] ?? false,
-                $permissionData['can_manage_finance'] ?? false,
-                $permissionData['can_view_analytics'] ?? false,
-                $permissionData['can_edit_profile'] ?? true,
-                $permissionId
-            ]);
-        } catch (\Exception $e) {
-            error_log("更新業務實體權限失敗: " . $e->getMessage());
-            return false;
+        switch ($action) {
+            case 'view':
+                return !$taskId || $this->isTaskParticipant($userId, $taskId);
+            case 'create':
+                return in_array($userRole, ['supplier', 'admin']);
+            case 'edit':
+            case 'delete':
+                return !$taskId || $this->isTaskOwner($userId, $taskId) || $userRole === 'admin';
+            default:
+                return false;
         }
     }
 
     /**
-     * 移除業務實體權限
+     * 檢查業務實體權限
      */
-    public function removeBusinessEntityPermission(string $permissionId): bool
+    private function checkBusinessEntityPermission(string $userId, string $userRole, string $action, ?string $businessEntityId): bool
     {
-        try {
-            $stmt = $this->pdo->prepare("
-                DELETE FROM user_business_permissions WHERE id = ?
-            ");
-            
-            return $stmt->execute([$permissionId]);
-        } catch (\Exception $e) {
-            error_log("移除業務實體權限失敗: " . $e->getMessage());
-            return false;
+        switch ($action) {
+            case 'view':
+                return !$businessEntityId || $this->hasBusinessEntityAccess($userId, $businessEntityId);
+            case 'create':
+                return true;
+            case 'edit':
+            case 'delete':
+                return !$businessEntityId || $this->isBusinessEntityManager($userId, $businessEntityId) || $userRole === 'admin';
+            default:
+                return false;
         }
+    }
+
+    /**
+     * 輔助方法
+     */
+    private function isTaskParticipant(string $userId, string $taskId): bool
+    {
+        return $this->db->exists('tasks', 'id = :task_id AND (supplier_id = :user_id)', [
+            'task_id' => $taskId, 'user_id' => $userId
+        ]) || $this->db->exists('task_applications', 'task_id = :task_id AND creator_id = :user_id', [
+            'task_id' => $taskId, 'user_id' => $userId
+        ]);
+    }
+
+    private function isTaskOwner(string $userId, string $taskId): bool
+    {
+        return $this->db->exists('tasks', 'id = :task_id AND supplier_id = :user_id', [
+            'task_id' => $taskId, 'user_id' => $userId
+        ]);
+    }
+
+    private function hasBusinessEntityAccess(string $userId, string $businessEntityId): bool
+    {
+        return $this->db->exists('user_business_permissions',
+            'user_id = :user_id AND business_entity_id = :business_entity_id', [
+            'user_id' => $userId, 'business_entity_id' => $businessEntityId
+        ]);
+    }
+
+    private function isBusinessEntityManager(string $userId, string $businessEntityId): bool
+    {
+        return $this->db->exists('user_business_permissions',
+            'user_id = :user_id AND business_entity_id = :business_entity_id AND permission_level = :level', [
+            'user_id' => $userId, 'business_entity_id' => $businessEntityId, 'level' => 'manager'
+        ]);
     }
 }

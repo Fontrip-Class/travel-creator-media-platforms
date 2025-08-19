@@ -7,17 +7,17 @@ const SiteFooter = () => {
         <section>
           <h3 className="font-semibold mb-3">關於平台</h3>
           <p className="text-sm text-muted-foreground">
-            連結旅遊供應商、創作者與媒體的合作與素材授權平台。
+            觀光署旅遊服務與行銷創作資源管理與媒合平台
           </p>
         </section>
         <nav className="grid gap-2">
           <h3 className="font-semibold mb-3">快速連結</h3>
-          <Link to="/suppliers" className="text-sm text-muted-foreground hover:text-foreground">供應商名錄</Link>
-          <Link to="/creators" className="text-sm text-muted-foreground hover:text-foreground">創作者名錄</Link>
-          <Link to="/media" className="text-sm text-muted-foreground hover:text-foreground">媒體名錄</Link>
+          <Link to="/suppliers" className="text-sm text-muted-foreground hover:text-foreground">供應商</Link>
+          <Link to="/creators" className="text-sm text-muted-foreground hover:text-foreground">創作者</Link>
+          <Link to="/media" className="text-sm text-muted-foreground hover:text-foreground">媒體資源</Link>
         </nav>
         <section id="contact">
-          <h3 className="font-semibold mb-3">聯絡我們</h3>
+          <h3 className="font-semibold mb-3">聯絡資訊</h3>
           <p className="text-sm text-muted-foreground">Email: hello@example.com</p>
         </section>
       </div>

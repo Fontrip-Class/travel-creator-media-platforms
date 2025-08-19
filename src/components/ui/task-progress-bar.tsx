@@ -1,66 +1,63 @@
-import React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
+import { Check, Clock, Eye, FileText, Flag, Star, Target, Users, Zap } from 'lucide-react';
+import React from 'react';
 
 export interface TaskStage {
   id: string;
   name: string;
   color: string;
-  icon: string;
+  icon: string | React.ReactNode;
   order: number;
   isCompleted: boolean;
   isCurrent: boolean;
   canInteract: boolean;
+  description?: string;
 }
 
 interface TaskProgressBarProps {
   stages: TaskStage[];
-  currentStage: string;
   progress: number;
-  className?: string;
-  onStageClick?: (stageId: string) => void;
-  showLabels?: boolean;
   compact?: boolean;
+  showLabels?: boolean;
+  onStageClick?: (stageId: string) => void;
+  className?: string;
 }
+
+// 圖標映射
+const iconMap: Record<string, React.ReactNode> = {
+  draft: <FileText className="w-5 h-5" />,
+  published: <Eye className="w-5 h-5" />,
+  collecting: <Users className="w-5 h-5" />,
+  evaluating: <Star className="w-5 h-5" />,
+  in_progress: <Zap className="w-5 h-5" />,
+  reviewing: <Target className="w-5 h-5" />,
+  publishing: <Flag className="w-5 h-5" />,
+  completed: <Check className="w-5 h-5" />,
+  cancelled: <Clock className="w-5 h-5" />,
+};
 
 export function TaskProgressBar({
   stages,
-  currentStage,
   progress,
-  className,
-  onStageClick,
-  showLabels = true,
   compact = false,
+  showLabels = true,
+  onStageClick,
+  className = ''
 }: TaskProgressBarProps) {
-  const sortedStages = stages.sort((a, b) => a.order - b.order);
+  // 按順序排序階段
+  const sortedStages = [...stages].sort((a, b) => a.order - b.order);
 
   return (
-    <div className={cn("w-full", className)}>
-      {/* 進度條 */}
-      <div className="relative mb-4">
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-between px-2">
-          {sortedStages.map((stage, index) => (
-            <div
-              key={stage.id}
-              className={cn(
-                "w-4 h-4 rounded-full border-2 transition-all duration-300",
-                stage.isCompleted
-                  ? "bg-green-500 border-green-500"
-                  : stage.isCurrent
-                  ? "bg-blue-500 border-blue-500"
-                  : "bg-white border-gray-300"
-              )}
-            />
-          ))}
-        </div>
+    <div className={cn("relative", className)}>
+      {/* 進度條背景 */}
+      <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
+        <div
+          className="bg-blue-500 h-2 rounded-full transition-all duration-500 ease-out"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
-      {/* 階段指示器 */}
+      {/* 階段顯示器 */}
       <div className="flex items-center justify-between">
         {sortedStages.map((stage, index) => (
           <div
@@ -70,7 +67,7 @@ export function TaskProgressBar({
               compact ? "flex-1" : "min-w-0 flex-1"
             )}
           >
-            {/* 階段圖標 */}
+            {/* 階段按鈕 */}
             <button
               onClick={() => onStageClick?.(stage.id)}
               disabled={!stage.canInteract}
@@ -87,7 +84,7 @@ export function TaskProgressBar({
                 !stage.canInteract && "opacity-50 cursor-not-allowed"
               )}
             >
-              {stage.icon}
+              {typeof stage.icon === 'string' ? iconMap[stage.icon] || stage.icon : stage.icon}
             </button>
 
             {/* 階段標籤 */}
@@ -142,13 +139,13 @@ export function TaskProgressBar({
   );
 }
 
-// 預設階段配置
+// 預設階段設置
 export const DEFAULT_TASK_STAGES: TaskStage[] = [
   {
     id: "draft",
     name: "草稿",
     color: "#6B7280",
-    icon: "📝",
+    icon: "draft",
     order: 1,
     isCompleted: false,
     isCurrent: false,
@@ -158,7 +155,7 @@ export const DEFAULT_TASK_STAGES: TaskStage[] = [
     id: "published",
     name: "已發布",
     color: "#3B82F6",
-    icon: "🚀",
+    icon: "published",
     order: 2,
     isCompleted: false,
     isCurrent: false,
@@ -166,9 +163,9 @@ export const DEFAULT_TASK_STAGES: TaskStage[] = [
   },
   {
     id: "collecting",
-    name: "徵集中",
+    name: "徵集申請",
     color: "#F59E0B",
-    icon: "🔍",
+    icon: "collecting",
     order: 3,
     isCompleted: false,
     isCurrent: false,
@@ -176,9 +173,9 @@ export const DEFAULT_TASK_STAGES: TaskStage[] = [
   },
   {
     id: "evaluating",
-    name: "評估中",
+    name: "評估申請",
     color: "#8B5CF6",
-    icon: "📊",
+    icon: "evaluating",
     order: 4,
     isCompleted: false,
     isCurrent: false,
@@ -186,9 +183,9 @@ export const DEFAULT_TASK_STAGES: TaskStage[] = [
   },
   {
     id: "in_progress",
-    name: "創作中",
+    name: "進行中",
     color: "#10B981",
-    icon: "🎨",
+    icon: "in_progress",
     order: 5,
     isCompleted: false,
     isCurrent: false,
@@ -198,7 +195,7 @@ export const DEFAULT_TASK_STAGES: TaskStage[] = [
     id: "reviewing",
     name: "審核中",
     color: "#EF4444",
-    icon: "📋",
+    icon: "reviewing",
     order: 6,
     isCompleted: false,
     isCurrent: false,
@@ -208,7 +205,7 @@ export const DEFAULT_TASK_STAGES: TaskStage[] = [
     id: "publishing",
     name: "發布中",
     color: "#06B6D4",
-    icon: "📡",
+    icon: "publishing",
     order: 7,
     isCompleted: false,
     isCurrent: false,
@@ -218,42 +215,49 @@ export const DEFAULT_TASK_STAGES: TaskStage[] = [
     id: "completed",
     name: "已完成",
     color: "#059669",
-    icon: "🏁",
+    icon: "completed",
     order: 8,
     isCompleted: false,
     isCurrent: false,
-    canInteract: false,
+    canInteract: true,
+  },
+  {
+    id: "cancelled",
+    name: "已取消",
+    color: "#6B7280",
+    icon: "cancelled",
+    order: 9,
+    isCompleted: false,
+    isCurrent: false,
+    canInteract: true,
   },
 ];
 
-// 工具函數：根據階段狀態創建階段數組
+// 工具函數：根據階段創建階段數組
 export function createTaskStages(
   currentStage: string,
   completedStages: string[] = []
 ): TaskStage[] {
-  return DEFAULT_TASK_STAGES.map((stage) => ({
+  return DEFAULT_TASK_STAGES.map(stage => ({
     ...stage,
-    isCurrent: stage.id === currentStage,
     isCompleted: completedStages.includes(stage.id),
-    canInteract: stage.id === currentStage || completedStages.includes(stage.id),
+    isCurrent: stage.id === currentStage,
+    canInteract: stage.order <= DEFAULT_TASK_STAGES.find(s => s.id === currentStage)?.order || 1,
   }));
 }
 
-// 工具函數：計算進度百分比
-export function calculateProgress(
-  currentStage: string,
-  completedStages: string[] = []
-): number {
-  const currentStageData = DEFAULT_TASK_STAGES.find(
-    (stage) => stage.id === currentStage
-  );
-  
-  if (!currentStageData) return 0;
-  
-  const totalStages = DEFAULT_TASK_STAGES.length;
-  const completedCount = completedStages.length;
-  
-  if (currentStageData.id === "completed") return 100;
-  
-  return Math.round(((currentStageData.order - 1) / (totalStages - 1)) * 100);
+// 工具函數：格式化進度顯示
+export function formatProgress(stages: TaskStage[]): string {
+  const completedCount = stages.filter(stage => stage.isCompleted).length;
+  const totalCount = stages.length;
+  return `${completedCount}/${totalCount}`;
+}
+
+// 工具函數：計算剩餘天數
+export function calculateRemainingDays(deadline: string): number {
+  const now = new Date();
+  const deadlineDate = new Date(deadline);
+  const diffTime = deadlineDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return Math.max(0, diffDays);
 }

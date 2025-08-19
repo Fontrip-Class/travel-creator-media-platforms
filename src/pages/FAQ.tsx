@@ -5,57 +5,57 @@ export default function FAQ() {
   return (
     <main className="min-h-screen">
       <SEO
-        title="常見問題 FAQ｜旅遊行銷媒合平台"
-        description="關於媒合流程、費用與授權、註冊與資料審核、下載與使用等常見問題解答。"
+        title="常見問題 FAQ｜觀光署旅遊平台"
+        description="關於媒體流程、費用計算、註冊資料審核、下載使用等常見問題解答"
       />
       <header className="bg-hero text-white">
         <div className="container py-14">
           <h1 className="text-3xl md:text-4xl font-bold mb-3">常見問題（FAQ）</h1>
-          <p className="opacity-90 max-w-2xl">快速了解平台的使用方式與規則。</p>
+          <p className="opacity-90 max-w-2xl">快速了解平台使用相關問題</p>
         </div>
       </header>
 
       <section className="container py-10">
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="item-1">
-            <AccordionTrigger>平台是否收費？如何計價？</AccordionTrigger>
+            <AccordionTrigger>平台是否收費？如何計算？</AccordionTrigger>
             <AccordionContent>
-              目前平台不收取使用費或抽成。供應商若提供合作預算，會直接於任務卡與詳情中顯示，創作者可依預算與需求申請。
+              本平台不收使用費或抽成。創作費用和預算會直接於任務詳情中顯示，創作者可依預算需求申請。
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="item-2">
-            <AccordionTrigger>如何成為創作者並提升媒合率？</AccordionTrigger>
+            <AccordionTrigger>如何成為創作者並開始媒合？</AccordionTrigger>
             <AccordionContent>
-              註冊後建立個人資料、專長領域與作品集，並盡量完整填寫地區、檔期、擅長內容形式等資訊，系統即可更準確推薦任務。
+              註冊後建立個人資料，選擇創作類型並盡可能詳細填寫地區、擅長內容形式等資料，系統即能更準確推薦任務。
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="item-3">
-            <AccordionTrigger>任務申請與審核流程是什麼？</AccordionTrigger>
+            <AccordionTrigger>任務申請的審核流程是什麼？</AccordionTrigger>
             <AccordionContent>
-              創作者從任務列表進入申請，提交提案與相關作品連結；供應商於後台審核與聯繫，確認合作後即可開始執行並於系統內回傳成果。
+              創作者瀏覽任務列表，提交申請方案和創作作品；任務發布者進行審核聯繫，確認合作細節並於系統中更新狀態。
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="item-4">
-            <AccordionTrigger>素材授權包含哪些條件？</AccordionTrigger>
+            <AccordionTrigger>素材包含哪些條件？</AccordionTrigger>
             <AccordionContent>
-              我們預設「使用性質（商用/編輯用）」、「期限（單次/30天/永久）」、「範圍（台灣/全球）」與「媒介（網路/社群/廣告/戶外）」四大選項，可於素材詳情清楚顯示。
+              我們設定「使用性質（商業/編輯/個人）」、「使用次數/30天/永久）」、「使用地區（台灣/全球）」、「使用媒體（網路/社群/電視/廣播）」等大選項，於素材詳情清楚顯示。
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="item-5">
             <AccordionTrigger>媒體如何下載素材？</AccordionTrigger>
             <AccordionContent>
-              於素材庫以關鍵字與條件搜尋 → 進入詳情頁確認授權條件 → 按下載並同意條款，系統將記錄下載紀錄以利後續追蹤。
+              素材庫以檔案列表形式呈現，點入詳情確認版權資訊後即可下載並同意條款，系統會記錄下載紀錄以便後續追蹤。
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="item-6">
-            <AccordionTrigger>資料審核與隱私如何保障？</AccordionTrigger>
+            <AccordionTrigger>資料審核和隱私如何保護？</AccordionTrigger>
             <AccordionContent>
-              註冊資料與上傳內容需遵守平台規範；個資僅用於媒合與通知用途，不會對外公開。詳細條款將於正式上線前公告。
+              註冊資料和內容需符合平台規範；個人資料使用需告知用途，不會對外洩露詳細資料，有正式法律條款保護。
             </AccordionContent>
           </AccordionItem>
         </Accordion>

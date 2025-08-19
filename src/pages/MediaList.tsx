@@ -3,8 +3,8 @@ import { SEO } from "@/components/SEO";
 import { medias } from "@/data/sample";
 
 const MediaList = () => {
-  const title = "媒體名錄 | 旅遊合作平台";
-  const description = "搜尋媒體與曝光管道，取得行銷素材與授權";
+  const title = "媒體列表 | 旅遊創作者平台";
+  const description = "探索媒體資源，管理創作行銷素材";
 
   return (
     <main className="container py-10">
@@ -24,8 +24,8 @@ const MediaList = () => {
       />
 
       <header className="mb-6">
-        <h1 className="text-3xl font-bold">媒體名錄</h1>
-        <p className="text-muted-foreground mt-2">搜尋曝光管道與合作窗口</p>
+        <h1 className="text-3xl font-bold">媒體列表</h1>
+        <p className="text-muted-foreground mt-2">探索媒體資源，管理創作素材</p>
       </header>
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

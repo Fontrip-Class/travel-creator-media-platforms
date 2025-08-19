@@ -1,31 +1,16 @@
 import { useState } from "react";
 import { SEO } from "@/components/SEO";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Grid3X3, 
-  List, 
-  Eye,
-  Heart,
-  Share2,
-  Calendar,
-  Tag,
-  Star,
-  Edit,
-  Trash2
-} from "lucide-react";
+import { Eye, Heart, Star, Download, Share2, Filter, Search, Grid3X3, List } from "lucide-react";
 
 interface PortfolioItem {
   id: string;
   title: string;
-  type: "image" | "video" | "article";
+  type: "image" | "video" | "article" | "design";
   category: string;
   tags: string[];
   thumbnail: string;
@@ -38,15 +23,16 @@ interface PortfolioItem {
 }
 
 export default function Portfolio() {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortBy, setSortBy] = useState("newest");
 
-  // 模擬作品集數據
+  // 模擬作品集資料
   const portfolioItems: PortfolioItem[] = [
     {
       id: "1",
-      title: "台東海岸風光攝影集",
+      title: "台東海岸風景攝影",
       type: "image",
       category: "攝影",
       tags: ["風景攝影", "海岸", "台東"],
@@ -54,53 +40,53 @@ export default function Portfolio() {
       views: 1520,
       likes: 89,
       createdDate: "2024-11-15",
-      taskRelated: "台東季節活動宣傳",
-      description: "拍攝台東美麗的海岸線，展現自然之美",
+      taskRelated: "台東秋季活動宣傳",
+      description: "捕捉台東美麗的海岸線，展現自然之美",
       rating: 4.8
     },
     {
       id: "2",
-      title: "美食短影音系列",
+      title: "美食攝影系列",
       type: "video",
       category: "影音製作",
-      tags: ["美食", "短影音", "TikTok"],
+      tags: ["美食", "攝影", "TikTok"],
       thumbnail: "/api/placeholder/300/200",
       views: 3200,
       likes: 156,
       createdDate: "2024-11-10",
-      taskRelated: "南投山區美食探索",
-      description: "製作吸引人的美食短影音內容",
+      taskRelated: "阿里山美食探索",
+      description: "製作吸引人的美食攝影內容",
       rating: 4.9
     },
     {
       id: "3",
-      title: "旅遊攻略文章",
+      title: "旅遊攻略撰寫",
       type: "article",
-      category: "文案撰寫",
-      tags: ["旅遊", "攻略", "部落格"],
+      category: "文章撰寫",
+      tags: ["旅遊", "攻略", "部落"],
       thumbnail: "/api/placeholder/300/200",
       views: 890,
       likes: 45,
       createdDate: "2024-11-05",
-      description: "深度旅遊攻略文章，提供實用資訊"
+      description: "深度旅遊攻略撰寫，提供實用資訊"
     },
     {
       id: "4",
-      title: "品牌形象照拍攝",
+      title: "品牌形象攝影",
       type: "image",
       category: "攝影",
-      tags: ["商業攝影", "品牌", "人像"],
+      tags: ["商業攝影", "品牌", "人物"],
       thumbnail: "/api/placeholder/300/200",
       views: 1100,
       likes: 78,
       createdDate: "2024-10-28",
       taskRelated: "花蓮海岸風景攝影",
-      description: "專業品牌形象照拍攝",
+      description: "專業品牌形象攝影作品",
       rating: 4.7
     }
   ];
 
-  const categories = ["all", "攝影", "影音製作", "文案撰寫", "設計"];
+  const categories = ["all", "攝影", "影音製作", "文章撰寫", "設計"];
 
   const filteredItems = portfolioItems.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,10 +97,10 @@ export default function Portfolio() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case "image": return "📸";
+      case "image": return "📷";
       case "video": return "🎥";
       case "article": return "📝";
-      default: return "📄";
+      default: return "🎨";
     }
   };
 
@@ -137,272 +123,241 @@ export default function Portfolio() {
         />
         <div className="absolute top-2 left-2">
           <Badge className={getTypeColor(item.type)}>
-            {getTypeIcon(item.type)} {item.type === "image" ? "圖片" : item.type === "video" ? "影音" : "文章"}
+            {getTypeIcon(item.type)} {item.type === "image" ? "攝影" : item.type === "video" ? "影音" : "文章"}
           </Badge>
         </div>
         <div className="absolute top-2 right-2 flex gap-1">
           <Button size="sm" variant="secondary" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Eye className="w-4 h-4" />
+            <Download className="h-4 w-4" />
           </Button>
           <Button size="sm" variant="secondary" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Share2 className="w-4 h-4" />
+            <Share2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
+      
       <CardContent className="p-4">
         <div className="space-y-3">
           <div>
-            <h3 className="font-semibold line-clamp-2">{item.title}</h3>
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{item.description}</p>
+            <h3 className="font-semibold text-lg mb-1 line-clamp-2">{item.title}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
           </div>
           
           <div className="flex flex-wrap gap-1">
             {item.tags.slice(0, 3).map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs">{tag}</Badge>
+              <Badge key={index} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
             ))}
           </div>
-
-          {item.taskRelated && (
-            <div className="text-xs text-muted-foreground">
-              任務相關：{item.taskRelated}
-            </div>
-          )}
-
+          
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
-                <Eye className="w-4 h-4" />
+                <Eye className="h-4 w-4" />
                 {item.views}
               </span>
               <span className="flex items-center gap-1">
-                <Heart className="w-4 h-4" />
+                <Heart className="h-4 w-4" />
                 {item.likes}
               </span>
               {item.rating && (
                 <span className="flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   {item.rating}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              {item.createdDate}
+            <span>{item.createdDate}</span>
+          </div>
+          
+          {item.taskRelated && (
+            <div className="pt-2 border-t">
+              <p className="text-xs text-muted-foreground">
+                相關任務：<span className="text-primary">{item.taskRelated}</span>
+              </p>
             </div>
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <Button size="sm" variant="outline" className="flex-1">
-              <Edit className="w-4 h-4 mr-1" />
-              編輯
-            </Button>
-            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>
   );
 
   const PortfolioListItem = ({ item }: { item: PortfolioItem }) => (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex gap-4">
+    <Card className="group hover:shadow-lg transition-shadow">
+      <div className="flex gap-4 p-4">
+        <div className="relative flex-shrink-0">
           <img
             src={item.thumbnail}
             alt={item.title}
-            className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+            className="w-32 h-24 object-cover rounded-lg group-hover:scale-105 transition-transform"
           />
-          <div className="flex-1 space-y-2">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="font-semibold">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
+          <div className="absolute top-2 left-2">
+            <Badge className={getTypeColor(item.type)}>
+              {getTypeIcon(item.type)}
+            </Badge>
+          </div>
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
+              <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
+              
+              <div className="flex flex-wrap gap-1 mb-2">
+                {item.tags.map((tag, index) => (
+                  <Badge key={index} variant="outline" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
               </div>
-              <Badge className={getTypeColor(item.type)}>
-                {getTypeIcon(item.type)} {item.type === "image" ? "圖片" : item.type === "video" ? "影音" : "文章"}
-              </Badge>
-            </div>
-            
-            <div className="flex flex-wrap gap-1">
-              {item.tags.map((tag, index) => (
-                <Badge key={index} variant="outline" className="text-xs">{tag}</Badge>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-between">
+              
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
-                  <Eye className="w-4 h-4" />
+                  <Eye className="h-4 w-4" />
                   {item.views}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Heart className="w-4 h-4" />
+                  <Heart className="h-4 w-4" />
                   {item.likes}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  {item.createdDate}
                 </span>
                 {item.rating && (
                   <span className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                     {item.rating}
                   </span>
                 )}
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline">
-                  <Edit className="w-4 h-4 mr-1" />
-                  編輯
-                </Button>
-                <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <span>{item.createdDate}</span>
               </div>
             </div>
+            
+            <div className="flex gap-2 ml-4">
+              <Button size="sm" variant="outline">
+                <Download className="h-4 w-4 mr-1" />
+                下載
+              </Button>
+              <Button size="sm" variant="outline">
+                <Share2 className="h-4 w-4 mr-1" />
+                分享
+              </Button>
+            </div>
           </div>
+          
+          {item.taskRelated && (
+            <div className="pt-2 border-t">
+              <p className="text-xs text-muted-foreground">
+                相關任務：<span className="text-primary">{item.taskRelated}</span>
+              </p>
+            </div>
+          )}
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <SEO 
-        title="我的作品集"
-        description="管理和展示您的創作作品"
+    <div className="min-h-screen bg-background">
+      <SEO
+        title="作品集 | 觀光署旅遊服務與行銷創作資源管理與媒合平台"
+        description="展示您的創作作品，吸引更多合作機會"
       />
 
-      <div className="space-y-6">
-        {/* 標題與操作 */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">我的作品集</h1>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            新增作品
-          </Button>
+      <div className="container mx-auto px-4 py-8">
+        {/* 頁面標題 */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">作品集</h1>
+          <p className="text-muted-foreground">
+            展示您的創作作品，吸引更多合作機會
+          </p>
         </div>
 
-        {/* 搜尋與篩選 */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="搜尋作品標題或標籤..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-48">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="選擇分類" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category === "all" ? "全部分類" : category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 統計概覽 */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary">
-                {portfolioItems.length}
-              </div>
-              <div className="text-sm text-muted-foreground">總作品數</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary">
-                {portfolioItems.reduce((sum, item) => sum + item.views, 0).toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">總瀏覽數</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary">
-                {portfolioItems.reduce((sum, item) => sum + item.likes, 0)}
-              </div>
-              <div className="text-sm text-muted-foreground">總按讚數</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary">
-                {(portfolioItems.filter(item => item.rating).reduce((sum, item) => sum + (item.rating || 0), 0) / 
-                  portfolioItems.filter(item => item.rating).length).toFixed(1)}
-              </div>
-              <div className="text-sm text-muted-foreground">平均評分</div>
-            </CardContent>
-          </Card>
+        {/* 搜尋和篩選工具列 */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="搜尋作品..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="選擇類別" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category === "all" ? "全部類別" : category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="排序方式" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">最新發布</SelectItem>
+              <SelectItem value="oldest">最早發布</SelectItem>
+              <SelectItem value="popular">最受歡迎</SelectItem>
+              <SelectItem value="rating">評分最高</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* 作品展示 */}
-        <div>
-          {filteredItems.length > 0 ? (
-            <>
-              {viewMode === "grid" ? (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {filteredItems.map((item) => (
-                    <PortfolioCard key={item.id} item={item} />
-                  ))}
-                </div>
+        {/* 檢視模式切換 */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={viewMode === "grid" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+            >
+              <Grid3X3 className="h-4 w-4 mr-1" />
+              網格檢視
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+            >
+              <List className="h-4 w-4 mr-1" />
+              列表檢視
+            </Button>
+          </div>
+          
+          <p className="text-sm text-muted-foreground">
+            共 {filteredItems.length} 個作品
+          </p>
+        </div>
+
+        {/* 作品列表 */}
+        {filteredItems.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <div className="text-4xl mb-4">🎨</div>
+              <h3 className="text-lg font-medium mb-2">沒有找到作品</h3>
+              <p className="text-muted-foreground">
+                嘗試調整搜尋條件或篩選器
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className={viewMode === "grid" ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" : "space-y-4"}>
+            {filteredItems.map((item) => (
+              viewMode === "grid" ? (
+                <PortfolioCard key={item.id} item={item} />
               ) : (
-                <div className="space-y-4">
-                  {filteredItems.map((item) => (
-                    <PortfolioListItem key={item.id} item={item} />
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <div className="text-muted-foreground">
-                  {searchTerm || selectedCategory !== "all" 
-                    ? "沒有找到符合條件的作品" 
-                    : "還沒有上傳任何作品"
-                  }
-                </div>
-                <Button className="mt-4">
-                  <Plus className="w-4 h-4 mr-2" />
-                  新增第一個作品
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                <PortfolioListItem key={item.id} item={item} />
+              )
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

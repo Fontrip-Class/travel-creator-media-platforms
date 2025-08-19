@@ -18,7 +18,7 @@ class AuthService
     {
         $this->db = $db;
         $this->jwtSecret = $_ENV['JWT_SECRET'] ?? 'default_secret';
-        $this->jwtExpiration = (int) ($_ENV['JWT_EXPIRATION'] ?? 3600);
+        $this->jwtExpiration = (int) ($_ENV['JWT_EXPIRATION'] ?? 86400); // 默认24小时
     }
 
     public function register(array $userData): array
@@ -44,7 +44,7 @@ class AuthService
 
         // 開始事務
         $this->db->beginTransaction();
-        
+
         try {
             // 插入用戶資料
             $userId = $this->db->insert('users', $userData);
@@ -72,14 +72,26 @@ class AuthService
         }
     }
 
+    public function isUsernameAvailable(string $username): bool
+    {
+        return !$this->db->exists('users', 'username = :username', ['username' => $username]);
+    }
+
+    public function isEmailAvailable(string $email): bool
+    {
+        return !$this->db->exists('users', 'email = :email', ['email' => $email]);
+    }
+
     public function login(string $email, string $password): array
     {
         // 檢查帳戶是否被鎖定
         $this->checkAccountLockout($email);
 
-        // 查找用戶
+        // 查找用戶 - 適配資料庫結構
         $user = $this->db->fetchOne(
-            'SELECT id, username, email, password_hash, role, is_active, login_attempts, locked_until FROM users WHERE email = :email',
+            'SELECT id, username, email, password_hash, role, is_active,
+                    COALESCE(login_attempts, 0) as login_attempts,
+                    locked_until FROM users WHERE email = :email',
             ['email' => $email]
         );
 
@@ -110,8 +122,12 @@ class AuthService
         // 更新最後登入時間
         $this->updateLastLogin($user['id']);
 
-        // 生成JWT token
+        // 生成JWT token和refresh token
         $token = $this->generateToken($user['id'], $user['role']);
+        $refreshToken = $this->generateRefreshToken($user['id']);
+
+        // 儲存refresh token到資料庫
+        $this->storeRefreshToken($user['id'], $refreshToken);
 
         return [
             'user_id' => $user['id'],
@@ -119,7 +135,9 @@ class AuthService
             'email' => $user['email'],
             'role' => $user['role'],
             'token' => $token,
-            'expires_in' => $this->jwtExpiration
+            'refresh_token' => $refreshToken,
+            'expires_in' => $this->jwtExpiration,
+            'token_type' => 'Bearer'
         ];
     }
 
@@ -127,7 +145,7 @@ class AuthService
     {
         try {
             $decoded = JWT::decode($token, new Key($this->jwtSecret, 'HS256'));
-            
+
             // 檢查用戶是否仍然存在且活躍
             $user = $this->db->fetchOne(
                 'SELECT id, username, email, role, is_active FROM users WHERE id = :id',
@@ -149,10 +167,62 @@ class AuthService
         }
     }
 
-    public function refreshToken(string $token): string
+    public function refreshToken(string $refreshToken): array
     {
-        $payload = $this->validateToken($token);
-        return $this->generateToken($payload['user_id'], $payload['role']);
+        try {
+            $decoded = JWT::decode($refreshToken, new Key($this->jwtSecret, 'HS256'));
+
+            // 验证这是refresh token
+            if (!isset($decoded->type) || $decoded->type !== 'refresh') {
+                throw new \Exception('Invalid token type');
+            }
+
+            // 检查refresh token是否在数据库中
+            $session = $this->db->fetchOne(
+                'SELECT user_id, expires_at FROM user_sessions WHERE refresh_token = :refresh_token',
+                ['refresh_token' => $refreshToken]
+            );
+
+            if (!$session) {
+                throw new \Exception('Refresh token not found');
+            }
+
+            if (strtotime($session['expires_at']) < time()) {
+                // 删除过期的refresh token
+                $this->db->delete('user_sessions', 'refresh_token = :refresh_token', ['refresh_token' => $refreshToken]);
+                throw new \Exception('Refresh token expired');
+            }
+
+            // 获取用户信息
+            $user = $this->db->fetchOne(
+                'SELECT id, username, email, role, is_active FROM users WHERE id = :id',
+                ['id' => $session['user_id']]
+            );
+
+            if (!$user || !$user['is_active']) {
+                throw new \Exception('User not found or inactive');
+            }
+
+            // 生成新的access token和refresh token
+            $newToken = $this->generateToken($user['id'], $user['role']);
+            $newRefreshToken = $this->generateRefreshToken($user['id']);
+
+            // 更新数据库中的refresh token
+            $this->storeRefreshToken($user['id'], $newRefreshToken);
+
+            return [
+                'user_id' => $user['id'],
+                'username' => $user['username'],
+                'email' => $user['email'],
+                'role' => $user['role'],
+                'token' => $newToken,
+                'refresh_token' => $newRefreshToken,
+                'expires_in' => $this->jwtExpiration,
+                'token_type' => 'Bearer'
+            ];
+        } catch (\Exception $e) {
+            throw new \Exception('Invalid refresh token: ' . $e->getMessage());
+        }
     }
 
     public function changePassword(string $userId, string $currentPassword, string $newPassword): bool
@@ -236,7 +306,7 @@ class AuthService
     {
         // 使用更簡單的驗證邏輯，避免 Respect\Validation 的複雜性
         $errors = [];
-        
+
         // 用戶名驗證
         if (empty($data['username']) || !is_string($data['username'])) {
             $errors[] = '用戶名不能為空且必須是字符串';
@@ -245,25 +315,25 @@ class AuthService
         } elseif (!preg_match('/^[\p{Han}a-zA-Z0-9_\s]+$/u', $data['username'])) {
             $errors[] = '用戶名格式不正確：只能包含中文、英文字母、數字、底線和空格';
         }
-        
+
         // 郵箱驗證
         if (empty($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             $errors[] = '郵箱格式不正確';
         }
-        
+
         // 密碼驗證
         if (empty($data['password']) || !is_string($data['password'])) {
             $errors[] = '密碼不能為空且必須是字符串';
         } elseif (strlen($data['password']) < 6 || strlen($data['password']) > 255) {
             $errors[] = '密碼長度必須在6-255字符之間';
         }
-        
+
         // 角色驗證
         $validRoles = ['supplier', 'creator', 'media'];
         if (empty($data['role']) || !in_array($data['role'], $validRoles)) {
             $errors[] = '角色必須是以下之一：' . implode(', ', $validRoles);
         }
-        
+
         // 如果有錯誤，拋出異常
         if (!empty($errors)) {
             throw new \Exception('資料驗證失敗：' . implode('; ', $errors));
@@ -279,7 +349,7 @@ class AuthService
         // 簡化密碼強度要求：至少包含數字和字母
         $hasLetter = preg_match('/[a-zA-Z]/', $password);
         $hasNumber = preg_match('/[0-9]/', $password);
-        
+
         if (!$hasLetter || !$hasNumber) {
             throw new \Exception('密碼必須至少包含字母和數字');
         }
@@ -328,9 +398,19 @@ class AuthService
 
     private function updateLastLogin(string $userId): void
     {
-        $this->db->update('users', [
-            'last_login_at' => date('Y-m-d H:i:s')
-        ], 'id = :id', ['id' => $userId]);
+        // 檢查欄位是否存在，如果不存在則跳過
+        try {
+            $this->db->update('users', [
+                'last_login_at' => date('Y-m-d H:i:s')
+            ], 'id = :id', ['id' => $userId]);
+        } catch (\Exception $e) {
+            // 如果欄位不存在，使用替代欄位或跳過
+            if (strpos($e->getMessage(), 'no such column') !== false) {
+                error_log("Warning: last_login_at column not found, skipping update");
+            } else {
+                throw $e;
+            }
+        }
     }
 
     private function generateToken(string $userId, string $role): string
@@ -344,6 +424,56 @@ class AuthService
         ];
 
         return JWT::encode($payload, $this->jwtSecret, 'HS256');
+    }
+
+    private function generateRefreshToken(string $userId): string
+    {
+        $refreshExpiration = (int) ($_ENV['JWT_REFRESH_EXPIRATION'] ?? 604800); // 默认7天
+        $payload = [
+            'user_id' => $userId,
+            'type' => 'refresh',
+            'iat' => time(),
+            'exp' => time() + $refreshExpiration,
+            'jti' => bin2hex(random_bytes(16))
+        ];
+
+        return JWT::encode($payload, $this->jwtSecret, 'HS256');
+    }
+
+    private function storeRefreshToken(string $userId, string $refreshToken): void
+    {
+        try {
+            // 先删除旧的refresh token
+            $this->db->delete('user_sessions', 'user_id = :user_id', ['user_id' => $userId]);
+
+            // 存储新的refresh token - 適配現有資料庫結構
+            $sessionData = [
+                'user_id' => $userId,
+                'token' => $refreshToken,
+                'created_at' => date('Y-m-d H:i:s'),
+                'expires_at' => date('Y-m-d H:i:s', time() + (int) ($_ENV['JWT_REFRESH_EXPIRATION'] ?? 604800))
+            ];
+
+            // 如果 refresh_token 欄位存在，則添加
+            $columns = $this->db->rawQuery("PRAGMA table_info(user_sessions)")->fetchAll();
+            $hasRefreshTokenColumn = false;
+            foreach ($columns as $column) {
+                if ($column['name'] === 'refresh_token') {
+                    $hasRefreshTokenColumn = true;
+                    break;
+                }
+            }
+
+            if ($hasRefreshTokenColumn) {
+                $sessionData['refresh_token'] = $refreshToken;
+            }
+
+            $this->db->insert('user_sessions', $sessionData);
+
+        } catch (\Exception $e) {
+            error_log("Warning: Failed to store refresh token: " . $e->getMessage());
+            // 不拋出異常，避免影響登入流程
+        }
     }
 
     private function createRoleProfile(string $userId, string $role, array $data): void

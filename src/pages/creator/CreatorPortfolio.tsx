@@ -20,7 +20,7 @@ export default function CreatorPortfolio() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             返回儀表板
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900">我的作品集</h1>
+          <h1 className="text-3xl font-bold text-gray-900">作品集</h1>
           <p className="text-gray-600">展示您的創作作品</p>
         </div>
 
@@ -30,7 +30,7 @@ export default function CreatorPortfolio() {
           </CardHeader>
           <CardContent>
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">作品集功能開發中</p>
+              <p className="text-gray-500 mb-4">作品集正在建設中</p>
               <Button onClick={() => navigate("/creator/dashboard")}>
                 返回儀表板
               </Button>

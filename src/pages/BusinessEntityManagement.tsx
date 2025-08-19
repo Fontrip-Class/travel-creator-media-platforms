@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ import {
   DollarSign,
   BarChart3
 } from "lucide-react";
-import { apiService } from "@/lib/api";
+import apiService from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { ApiErrorDisplay } from "@/components/ui/error-display";
 import type { 
@@ -77,13 +77,13 @@ export default function BusinessEntityManagement() {
             if (entityResponse.success && entityResponse.data) {
               const entity = entityResponse.data as BusinessEntityWithPermissions;
               
-              // 載入權限資訊
+              // 載入權限資料
               const permissionsResponse = await apiService.getBusinessEntityPermissions(entity.id);
               if (permissionsResponse.success) {
                 entity.permissions = permissionsResponse.data;
               }
 
-              // 載入詳細資訊
+              // 載入相關檔案
               if (entity.type === 'supplier') {
                 const profileResponse = await apiService.getSupplierProfile(entity.id);
                 if (profileResponse.success) {
@@ -109,38 +109,61 @@ export default function BusinessEntityManagement() {
 
         setBusinessEntities(entities.filter(Boolean) as BusinessEntityWithPermissions[]);
       }
-    } catch (error: any) {
-      setError(error.message || "載入業務實體失敗");
-      toast({
-        title: "載入失敗",
-        description: error.message || "無法載入業務實體",
-        variant: "destructive"
-      });
+    } catch (error) {
+      console.error('載入業務實體失敗:', error);
+      setError('載入業務實體時發生錯誤');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCreate = () => {
+    setIsCreating(true);
+    setCreateForm({
+      name: '',
+      type: 'supplier',
+      description: '',
+      contact_email: '',
+      contact_phone: '',
+      website: '',
+      address: '',
+      status: 'active'
+    });
   };
 
   const handleEdit = (entity: BusinessEntityWithPermissions) => {
     setSelectedEntity(entity);
     setEditForm({
       name: entity.name,
+      type: entity.type,
       description: entity.description,
+      contact_email: entity.contact_email,
+      contact_phone: entity.contact_phone,
       website: entity.website,
+      address: entity.address,
       status: entity.status
     });
     setIsEditing(true);
   };
 
-  const handleCreate = () => {
-    setCreateForm({
-      name: '',
-      type: '',
-      description: '',
-      website: '',
-      status: 'active'
-    });
-    setIsCreating(true);
+  const handleDelete = async (entityId: string) => {
+    if (window.confirm('確定要刪除這個業務實體嗎？此操作無法撤銷。')) {
+      try {
+        const response = await apiService.deleteBusinessEntity(entityId);
+        if (response.success) {
+          toast({
+            title: "刪除成功",
+            description: "業務實體已成功刪除",
+          });
+          loadBusinessEntities();
+        } else {
+          setError(response.message || '刪除失敗');
+        }
+      } catch (error) {
+        console.error('刪除業務實體失敗:', error);
+        setError('刪除業務實體時發生錯誤');
+      }
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -151,68 +174,43 @@ export default function BusinessEntityManagement() {
       if (response.success) {
         toast({
           title: "更新成功",
-          description: "業務實體已更新",
+          description: "業務實體已成功更新",
         });
-        
-        // 重新載入資料
-        await loadBusinessEntities();
         setIsEditing(false);
         setSelectedEntity(null);
+        loadBusinessEntities();
+      } else {
+        setError(response.message || '更新失敗');
       }
-    } catch (error: any) {
-      toast({
-        title: "更新失敗",
-        description: error.message || "無法更新業務實體",
-        variant: "destructive"
-      });
+    } catch (error) {
+      console.error('更新業務實體失敗:', error);
+      setError('更新業務實體時發生錯誤');
     }
   };
 
   const handleSaveCreate = async () => {
     try {
+      const userId = localStorage.getItem('user_id');
+      if (!userId) {
+        setError('用戶未登入');
+        return;
+      }
+
       const response = await apiService.createBusinessEntity(createForm);
       if (response.success) {
         toast({
           title: "創建成功",
-          description: "業務實體已創建",
+          description: "業務實體已成功創建",
         });
-        
-        // 重新載入資料
-        await loadBusinessEntities();
         setIsCreating(false);
         setCreateForm({});
+        loadBusinessEntities();
+      } else {
+        setError(response.message || '創建失敗');
       }
-    } catch (error: any) {
-      toast({
-        title: "創建失敗",
-        description: error.message || "無法創建業務實體",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDelete = async (entityId: string) => {
-    if (!confirm("確定要刪除這個業務實體嗎？此操作無法撤銷。")) {
-      return;
-    }
-
-    try {
-      const response = await apiService.deleteBusinessEntity(entityId);
-      if (response.success) {
-        toast({
-          title: "刪除成功",
-          description: "業務實體已刪除",
-        });
-        
-        // 重新載入資料
-        await loadBusinessEntities();
-      }
-    } catch (error: any) {
-      toast({
-        title: "刪除失敗",
-        description: error.message || "無法刪除業務實體",
-        variant: "destructive"
-      });
+    } catch (error) {
+      console.error('創建業務實體失敗:', error);
+      setError('創建業務實體時發生錯誤');
     }
   };
 
@@ -245,9 +243,9 @@ export default function BusinessEntityManagement() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge variant="default" className="bg-green-100 text-green-800">啟用中</Badge>;
+        return <Badge variant="default" className="bg-green-100 text-green-800">啟用</Badge>;
       case 'inactive':
-        return <Badge variant="secondary">停用中</Badge>;
+        return <Badge variant="secondary">停用</Badge>;
       case 'pending':
         return <Badge variant="outline" className="text-yellow-600">待審核</Badge>;
       default:
@@ -287,7 +285,7 @@ export default function BusinessEntityManagement() {
     <div className="min-h-screen bg-background">
       <SEO
         title="業務實體管理 | 觀光署旅遊服務與行銷創作資源管理與媒合平台"
-        description="管理您的業務實體、權限和設定"
+        description="管理您的業務實體，包括供應商、創作者、媒體等"
       />
 
       <div className="container mx-auto px-4 py-8">
@@ -295,12 +293,12 @@ export default function BusinessEntityManagement() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">業務實體管理</h1>
             <p className="text-muted-foreground mt-2">
-              管理您的所有業務實體，包括供應商、創作者和媒體通路
+              管理您的業務實體，包括供應商、創作者、媒體等
             </p>
           </div>
           <Button onClick={handleCreate} className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
-            新增業務實體
+            創建業務實體
           </Button>
         </div>
 
@@ -332,69 +330,58 @@ export default function BusinessEntityManagement() {
               
               <CardContent>
                 <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                  {entity.description}
+                  {entity.description || '暫無描述'}
                 </p>
-
-                {entity.website && (
-                  <div className="mb-4">
-                    <Label className="text-xs text-gray-500">網站</Label>
-                    <p className="text-sm text-blue-600 hover:underline cursor-pointer">
-                      {entity.website}
-                    </p>
-                  </div>
-                )}
-
-                {/* 權限顯示 */}
-                {entity.permissions && entity.permissions.length > 0 && (
-                  <div className="mb-4">
-                    <Label className="text-xs text-gray-500 mb-2 block">權限</Label>
-                    <div className="flex flex-wrap gap-1">
-                      {entity.permissions.map((permission) => (
-                        <div key={permission.id} className="flex items-center gap-1">
-                          {permission.permission_level === 'manager' ? (
-                            <Badge variant="default" className="text-xs">
-                              <Shield className="w-3 h-3 mr-1" />
-                              管理者
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-xs">
-                              <UserCheck className="w-3 h-3 mr-1" />
-                              使用者
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
+                
+                <div className="space-y-2 mb-4">
+                  {entity.contact_email && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">聯絡郵箱:</span> {entity.contact_email}
                     </div>
-                  </div>
-                )}
+                  )}
+                  {entity.contact_phone && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">聯絡電話:</span> {entity.contact_phone}
+                    </div>
+                  )}
+                  {entity.website && (
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">網站:</span> 
+                      <a href={entity.website} target="_blank" rel="noopener noreferrer" 
+                         className="text-blue-600 hover:underline ml-1">
+                        {entity.website}
+                      </a>
+                    </div>
+                  )}
+                </div>
 
-                {/* 操作按鈕 */}
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedEntity(entity)}
-                    className="flex-1"
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    查看
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
                     onClick={() => handleEdit(entity)}
-                    className="flex-1"
+                    className="flex items-center gap-2"
                   >
-                    <Edit className="w-4 h-4 mr-1" />
+                    <Edit className="w-4 h-4" />
                     編輯
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setSelectedEntity(entity)}
+                    className="flex items-center gap-2"
+                  >
+                    <Eye className="w-4 h-4" />
+                    查看
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
                     onClick={() => handleDelete(entity.id)}
-                    className="text-red-600 hover:text-red-700"
+                    className="flex items-center gap-2 text-red-600 hover:text-red-700"
                   >
                     <Trash2 className="w-4 h-4" />
+                    刪除
                   </Button>
                 </div>
               </CardContent>
@@ -402,412 +389,523 @@ export default function BusinessEntityManagement() {
           ))}
         </div>
 
-        {businessEntities.length === 0 && (
-          <div className="text-center py-16">
-            <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">還沒有業務實體</h3>
-            <p className="text-gray-600 mb-6">
-              開始創建您的第一個業務實體，管理您的供應商、創作者或媒體通路
-            </p>
-            <Button onClick={handleCreate}>
-              <Plus className="w-4 h-4 mr-2" />
-              創建業務實體
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* 編輯對話框 */}
-      {isEditing && selectedEntity && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle>編輯業務實體</CardTitle>
-              <CardDescription>
-                更新 {selectedEntity.name} 的資訊
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="edit-name">名稱</Label>
-                <Input
-                  id="edit-name"
-                  value={editForm.name || ''}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="edit-description">描述</Label>
-                <Textarea
-                  id="edit-description"
-                  value={editForm.description || ''}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="edit-website">網站</Label>
-                <Input
-                  id="edit-website"
-                  value={editForm.website || ''}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, website: e.target.value }))}
-                  placeholder="https://..."
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="edit-status">狀態</Label>
-                <Select
-                  value={editForm.status || 'active'}
-                  onValueChange={(value) => setEditForm(prev => ({ ...prev, status: value }))}
+        {/* 創建業務實體對話框 */}
+        {isCreating && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">創建業務實體</h2>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsCreating(false)}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">啟用中</SelectItem>
-                    <SelectItem value="inactive">停用中</SelectItem>
-                    <SelectItem value="pending">待審核</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditing(false)}
-                  className="flex-1"
-                >
-                  取消
-                </Button>
-                <Button onClick={handleSaveEdit} className="flex-1">
-                  儲存變更
+                  ✕
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
-      {/* 創建對話框 */}
-      {isCreating && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle>創建新業務實體</CardTitle>
-              <CardDescription>
-                建立新的業務實體來管理您的業務
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="create-name">名稱 *</Label>
-                <Input
-                  id="create-name"
-                  value={createForm.name || ''}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="例如：九族文化村、趙致緯工作室"
-                />
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name" className="text-sm font-medium">名稱</Label>
+                    <Input
+                      id="name"
+                      value={createForm.name || ''}
+                      onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
+                      placeholder="業務實體名稱"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="type" className="text-sm font-medium">類型</Label>
+                    <Select 
+                      value={createForm.type || 'supplier'} 
+                      onValueChange={(value) => setCreateForm({...createForm, type: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="supplier">供應商</SelectItem>
+                        <SelectItem value="koc">KOC/創作者</SelectItem>
+                        <SelectItem value="media">媒體</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="description" className="text-sm font-medium">描述</Label>
+                  <Textarea
+                    id="description"
+                    value={createForm.description || ''}
+                    onChange={(e) => setCreateForm({...createForm, description: e.target.value})}
+                    placeholder="業務實體描述"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="contact_email" className="text-sm font-medium">聯絡郵箱</Label>
+                    <Input
+                      id="contact_email"
+                      type="email"
+                      value={createForm.contact_email || ''}
+                      onChange={(e) => setCreateForm({...createForm, contact_email: e.target.value})}
+                      placeholder="聯絡郵箱"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact_phone" className="text-sm font-medium">聯絡電話</Label>
+                    <Input
+                      id="contact_phone"
+                      value={createForm.contact_phone || ''}
+                      onChange={(e) => setCreateForm({...createForm, contact_phone: e.target.value})}
+                      placeholder="聯絡電話"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="website" className="text-sm font-medium">網站</Label>
+                    <Input
+                      id="website"
+                      value={createForm.website || ''}
+                      onChange={(e) => setCreateForm({...createForm, website: e.target.value})}
+                      placeholder="網站網址"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="status" className="text-sm font-medium">狀態</Label>
+                    <Select 
+                      value={createForm.status || 'active'} 
+                      onValueChange={(value) => setCreateForm({...createForm, status: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">啟用</SelectItem>
+                        <SelectItem value="inactive">停用</SelectItem>
+                        <SelectItem value="pending">待審核</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="address" className="text-sm font-medium">地址</Label>
+                  <Textarea
+                    id="address"
+                    value={createForm.address || ''}
+                    onChange={(e) => setCreateForm({...createForm, address: e.target.value})}
+                    placeholder="業務實體地址"
+                    rows={2}
+                  />
+                </div>
               </div>
-              
-              <div>
-                <Label htmlFor="create-type">類型 *</Label>
-                <Select
-                  value={createForm.type || ''}
-                  onValueChange={(value) => setCreateForm(prev => ({ ...prev, type: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="選擇業務實體類型" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="supplier">供應商</SelectItem>
-                    <SelectItem value="koc">KOC/創作者</SelectItem>
-                    <SelectItem value="media">媒體</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="create-description">描述 *</Label>
-                <Textarea
-                  id="create-description"
-                  value={createForm.description || ''}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="請描述這個業務實體的主要業務和特色"
-                  rows={3}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="create-website">網站</Label>
-                <Input
-                  id="create-website"
-                  value={createForm.website || ''}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, website: e.target.value }))}
-                  placeholder="https://..."
-                />
-              </div>
-              
-              <div className="flex gap-2 pt-4">
-                <Button
-                  variant="outline"
+
+              <div className="flex items-center gap-3 mt-6">
+                <Button onClick={handleSaveCreate} className="flex-1">
+                  創建業務實體
+                </Button>
+                <Button 
+                  variant="outline" 
                   onClick={() => setIsCreating(false)}
                   className="flex-1"
                 >
                   取消
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 編輯業務實體對話框 */}
+        {isEditing && selectedEntity && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">編輯業務實體</h2>
                 <Button 
-                  onClick={handleSaveCreate} 
-                  className="flex-1"
-                  disabled={!createForm.name || !createForm.type || !createForm.description}
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsEditing(false)}
                 >
-                  創建
+                  ✕
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
-      {/* 詳細資訊對話框 */}
-      {selectedEntity && !isEditing && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {getEntityIcon(selectedEntity.type)}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <CardTitle className="text-2xl">{selectedEntity.name}</CardTitle>
-                    <CardDescription>
-                      {getEntityTypeLabel(selectedEntity.type)} • {getStatusBadge(selectedEntity.status)}
-                    </CardDescription>
+                    <Label htmlFor="edit-name" className="text-sm font-medium">名稱</Label>
+                    <Input
+                      id="edit-name"
+                      value={editForm.name || ''}
+                      onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                      placeholder="業務實體名稱"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-type" className="text-sm font-medium">類型</Label>
+                    <Select 
+                      value={editForm.type || 'supplier'} 
+                      onValueChange={(value) => setEditForm({...editForm, type: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="supplier">供應商</SelectItem>
+                        <SelectItem value="koc">KOC/創作者</SelectItem>
+                        <SelectItem value="media">媒體</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedEntity(null)}
+
+                <div>
+                  <Label htmlFor="edit-description" className="text-sm font-medium">描述</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={editForm.description || ''}
+                    onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                    placeholder="業務實體描述"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-contact_email" className="text-sm font-medium">聯絡郵箱</Label>
+                    <Input
+                      id="edit-contact_email"
+                      type="email"
+                      value={editForm.contact_email || ''}
+                      onChange={(e) => setEditForm({...editForm, contact_email: e.target.value})}
+                      placeholder="聯絡郵箱"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-contact_phone" className="text-sm font-medium">聯絡電話</Label>
+                    <Input
+                      id="edit-contact_phone"
+                      value={editForm.contact_phone || ''}
+                      onChange={(e) => setEditForm({...editForm, contact_phone: e.target.value})}
+                      placeholder="聯絡電話"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="edit-website" className="text-sm font-medium">網站</Label>
+                    <Input
+                      id="edit-website"
+                      value={editForm.website || ''}
+                      onChange={(e) => setEditForm({...editForm, website: e.target.value})}
+                      placeholder="網站網址"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-status" className="text-sm font-medium">狀態</Label>
+                    <Select 
+                      value={editForm.status || 'active'} 
+                      onValueChange={(value) => setEditForm({...editForm, status: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">啟用</SelectItem>
+                        <SelectItem value="inactive">停用</SelectItem>
+                        <SelectItem value="pending">待審核</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="edit-address" className="text-sm font-medium">地址</Label>
+                  <Textarea
+                    id="edit-address"
+                    value={editForm.address || ''}
+                    onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                    placeholder="業務實體地址"
+                    rows={2}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mt-6">
+                <Button onClick={handleSaveEdit} className="flex-1">
+                  保存更改
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditing(false)}
+                  className="flex-1"
                 >
-                  關閉
+                  取消
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="overview" className="w-full">
+            </div>
+          </div>
+        )}
+
+        {/* 業務實體詳情對話框 */}
+        {selectedEntity && !isEditing && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">{selectedEntity.name}</h2>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleEdit(selectedEntity)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    編輯
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setSelectedEntity(null)}
+                  >
+                    ✕
+                  </Button>
+                </div>
+              </div>
+
+              <Tabs defaultValue="basic" className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="overview">概覽</TabsTrigger>
-                  <TabsTrigger value="permissions">權限</TabsTrigger>
-                  <TabsTrigger value="profile">詳細資料</TabsTrigger>
+                  <TabsTrigger value="basic">基本資訊</TabsTrigger>
+                  <TabsTrigger value="permissions">權限管理</TabsTrigger>
+                  <TabsTrigger value="profiles">詳細檔案</TabsTrigger>
                   <TabsTrigger value="settings">設定</TabsTrigger>
                 </TabsList>
-                
-                <TabsContent value="overview" className="space-y-4">
+
+                <TabsContent value="basic" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">名稱</Label>
+                      <p className="text-sm text-gray-900">{selectedEntity.name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">類型</Label>
+                      <p className="text-sm text-gray-900">{getEntityTypeLabel(selectedEntity.type)}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">狀態</Label>
+                      <div>{getStatusBadge(selectedEntity.status)}</div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">創建時間</Label>
+                      <p className="text-sm text-gray-900">
+                        {new Date(selectedEntity.created_at).toLocaleDateString('zh-TW')}
+                      </p>
+                    </div>
+                  </div>
+
                   <div>
                     <Label className="text-sm font-medium text-gray-700">描述</Label>
-                    <p className="text-gray-900 mt-1">{selectedEntity.description}</p>
+                    <p className="text-sm text-gray-900">{selectedEntity.description || '暫無描述'}</p>
                   </div>
-                  
-                  {selectedEntity.website && (
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">聯絡郵箱</Label>
+                      <p className="text-sm text-gray-900">{selectedEntity.contact_email || '暫無'}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">聯絡電話</Label>
+                      <p className="text-sm text-gray-900">{selectedEntity.contact_phone || '暫無'}</p>
+                    </div>
                     <div>
                       <Label className="text-sm font-medium text-gray-700">網站</Label>
-                      <a 
-                        href={selectedEntity.website} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline mt-1 block"
-                      >
-                        {selectedEntity.website}
-                      </a>
+                      <p className="text-sm text-gray-900">
+                        {selectedEntity.website ? (
+                          <a href={selectedEntity.website} target="_blank" rel="noopener noreferrer" 
+                             className="text-blue-600 hover:underline">
+                            {selectedEntity.website}
+                          </a>
+                        ) : '暫無'}
+                      </p>
                     </div>
-                  )}
-                  
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">創建時間</Label>
-                    <p className="text-gray-900 mt-1">
-                      {new Date(selectedEntity.created_at).toLocaleDateString('zh-TW')}
-                    </p>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">地址</Label>
+                      <p className="text-sm text-gray-900">{selectedEntity.address || '暫無'}</p>
+                    </div>
                   </div>
                 </TabsContent>
-                
+
                 <TabsContent value="permissions" className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-medium">權限管理</h3>
-                    <Button variant="outline" size="sm">
-                      <Settings className="w-4 h-4 mr-1" />
-                      管理權限
+                    <Button size="sm" className="flex items-center gap-2">
+                      <Plus className="w-4 h-4" />
+                      新增權限
                     </Button>
                   </div>
-                  
+
                   {selectedEntity.permissions && selectedEntity.permissions.length > 0 ? (
                     <div className="space-y-3">
                       {selectedEntity.permissions.map((permission) => (
-                        <div key={permission.id} className="border rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              {permission.permission_level === 'manager' ? (
-                                <Badge variant="default">
-                                  <Shield className="w-4 h-4 mr-1" />
-                                  管理者
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline">
-                                  <UserCheck className="w-4 h-4 mr-1" />
-                                  使用者
-                                </Badge>
-                              )}
+                        <div key={permission.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                              <UserCheck className="w-4 h-4 text-gray-600" />
                             </div>
-                            <span className="text-sm text-gray-500">
-                              {new Date(permission.granted_at).toLocaleDateString('zh-TW')}
-                            </span>
+                            <div>
+                              <p className="font-medium">用戶 ID: {permission.user_id}</p>
+                              <p className="text-sm text-gray-600">權限等級: {permission.permission_level}</p>
+                            </div>
                           </div>
-                          
-                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                            {Object.entries({
-                              'can_manage_users': '管理用戶',
-                              'can_manage_content': '管理內容',
-                              'can_manage_finance': '管理財務',
-                              'can_view_analytics': '查看分析',
-                              'can_edit_profile': '編輯資料'
-                            }).map(([key, label]) => (
-                              <div key={key} className="flex items-center gap-1">
-                                {getPermissionIcon(key)}
-                                <span className="text-sm text-gray-600">{label}</span>
-                                <div className={`w-2 h-2 rounded-full ${
-                                  permission[key as keyof UserBusinessPermission] ? 'bg-green-500' : 'bg-gray-300'
-                                }`} />
-                              </div>
-                            ))}
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-red-600">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      還沒有設定權限
-                    </div>
+                    <p className="text-gray-500 text-center py-8">暫無權限設定</p>
                   )}
                 </TabsContent>
-                
-                <TabsContent value="profile" className="space-y-4">
+
+                <TabsContent value="profiles" className="space-y-4">
                   {selectedEntity.type === 'supplier' && selectedEntity.supplierProfile && (
-                    <div className="space-y-4">
+                    <div>
                       <h3 className="text-lg font-medium">供應商詳細資料</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                         <div>
                           <Label className="text-sm font-medium text-gray-700">公司名稱</Label>
-                          <p className="text-gray-900 mt-1">{selectedEntity.supplierProfile.company_name}</p>
+                          <p className="text-sm text-gray-900">{selectedEntity.supplierProfile.company_name || '暫無'}</p>
                         </div>
                         <div>
-                          <Label className="text-sm font-medium text-gray-700">業務類型</Label>
-                          <p className="text-gray-900 mt-1">{selectedEntity.supplierProfile.business_type}</p>
+                          <Label className="text-sm font-medium text-gray-700">產業類型</Label>
+                          <p className="text-sm text-gray-900">{selectedEntity.supplierProfile.industry_type || '暫無'}</p>
                         </div>
                         <div>
-                          <Label className="text-sm font-medium text-gray-700">執照號碼</Label>
-                          <p className="text-gray-900 mt-1">{selectedEntity.supplierProfile.license_number}</p>
+                          <Label className="text-sm font-medium text-gray-700">營業執照</Label>
+                          <p className="text-sm text-gray-900">{selectedEntity.supplierProfile.business_license || '暫無'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700">年營業額</Label>
+                          <p className="text-sm text-gray-900">{selectedEntity.supplierProfile.annual_revenue || '暫無'}</p>
                         </div>
                       </div>
                     </div>
                   )}
-                  
+
                   {selectedEntity.type === 'koc' && selectedEntity.creatorProfile && (
-                    <div className="space-y-4">
+                    <div>
                       <h3 className="text-lg font-medium">創作者詳細資料</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                         <div>
-                          <Label className="text-sm font-medium text-gray-700">作品集連結</Label>
-                          {selectedEntity.creatorProfile.portfolio_url ? (
-                            <a 
-                              href={selectedEntity.creatorProfile.portfolio_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline mt-1 block"
-                            >
-                              {selectedEntity.creatorProfile.portfolio_url}
-                            </a>
-                          ) : (
-                            <p className="text-gray-500 mt-1">未設定</p>
-                          )}
+                          <Label className="text-sm font-medium text-gray-700">個人品牌</Label>
+                          <p className="text-sm text-gray-900">{selectedEntity.creatorProfile.personal_brand || '暫無'}</p>
                         </div>
                         <div>
-                          <Label className="text-sm font-medium text-gray-700">內容類型</Label>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {selectedEntity.creatorProfile.content_types?.map((type) => (
-                              <Badge key={type} variant="secondary">{type}</Badge>
-                            )) || <span className="text-gray-500">未設定</span>}
-                          </div>
+                          <Label className="text-sm font-medium text-gray-700">專長領域</Label>
+                          <p className="text-sm text-gray-900">{selectedEntity.creatorProfile.expertise_areas || '暫無'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700">粉絲數量</Label>
+                          <p className="text-sm text-gray-900">{selectedEntity.creatorProfile.follower_count || '暫無'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700">作品集網址</Label>
+                          <p className="text-sm text-gray-900">
+                            {selectedEntity.creatorProfile.portfolio_url ? (
+                              <a href={selectedEntity.creatorProfile.portfolio_url} target="_blank" rel="noopener noreferrer" 
+                                 className="text-blue-600 hover:underline">
+                                {selectedEntity.creatorProfile.portfolio_url}
+                              </a>
+                            ) : '暫無'}
+                          </p>
                         </div>
                       </div>
                     </div>
                   )}
-                  
+
                   {selectedEntity.type === 'media' && selectedEntity.mediaProfile && (
-                    <div className="space-y-4">
+                    <div>
                       <h3 className="text-lg font-medium">媒體詳細資料</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                         <div>
                           <Label className="text-sm font-medium text-gray-700">媒體類型</Label>
-                          <p className="text-gray-900 mt-1">{selectedEntity.mediaProfile.media_type}</p>
+                          <p className="text-sm text-gray-900">{selectedEntity.mediaProfile.media_type || '暫無'}</p>
                         </div>
                         <div>
-                          <Label className="text-sm font-medium text-gray-700">平台名稱</Label>
-                          <p className="text-gray-900 mt-1">{selectedEntity.mediaProfile.platform_name}</p>
+                          <Label className="text-sm font-medium text-gray-700">覆蓋範圍</Label>
+                          <p className="text-sm text-gray-900">{selectedEntity.mediaProfile.coverage_area || '暫無'}</p>
                         </div>
                         <div>
-                          <Label className="text-sm font-medium text-gray-700">受眾規模</Label>
-                          <p className="text-gray-900 mt-1">{selectedEntity.mediaProfile.audience_size?.toLocaleString()}</p>
+                          <Label className="text-sm font-medium text-gray-700">受眾群體</Label>
+                          <p className="text-sm text-gray-900">{selectedEntity.mediaProfile.target_audience || '暫無'}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700">合作案例</Label>
+                          <p className="text-sm text-gray-900">{selectedEntity.mediaProfile.collaboration_cases || '暫無'}</p>
                         </div>
                       </div>
                     </div>
                   )}
+
+                  {!selectedEntity.supplierProfile && !selectedEntity.creatorProfile && !selectedEntity.mediaProfile && (
+                    <p className="text-gray-500 text-center py-8">暫無詳細檔案</p>
+                  )}
                 </TabsContent>
-                
+
                 <TabsContent value="settings" className="space-y-4">
-                  <h3 className="text-lg font-medium">設定選項</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">進階設定</h3>
+                    <Button variant="outline" size="sm">
+                      <Settings className="w-4 h-4 mr-2" />
+                      設定
+                    </Button>
+                  </div>
+
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <h4 className="font-medium">通知設定</h4>
-                        <p className="text-sm text-gray-600">管理業務實體相關的通知</p>
+                        <p className="font-medium">自動備份</p>
+                        <p className="text-sm text-gray-600">定期備份業務實體資料</p>
                       </div>
-                      <Button variant="outline" size="sm">
-                        設定
-                      </Button>
+                      <Button variant="outline" size="sm">啟用</Button>
                     </div>
-                    
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <h4 className="font-medium">資料匯出</h4>
-                        <p className="text-sm text-gray-600">匯出業務實體的資料</p>
+                        <p className="font-medium">通知設定</p>
+                        <p className="text-sm text-gray-600">接收重要事件通知</p>
                       </div>
-                      <Button variant="outline" size="sm">
-                        匯出
-                      </Button>
+                      <Button variant="outline" size="sm">設定</Button>
                     </div>
-                    
-                    <div className="flex items-center justify-between p-4 border rounded-lg">
+
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <h4 className="font-medium text-red-600">危險區域</h4>
-                        <p className="text-sm text-gray-600">刪除業務實體（此操作無法撤銷）</p>
+                        <p className="font-medium">資料匯出</p>
+                        <p className="text-sm text-gray-600">匯出業務實體資料</p>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleDelete(selectedEntity.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        刪除
-                      </Button>
+                      <Button variant="outline" size="sm">匯出</Button>
                     </div>
                   </div>
                 </TabsContent>
               </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
