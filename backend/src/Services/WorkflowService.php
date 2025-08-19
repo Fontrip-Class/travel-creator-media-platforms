@@ -713,14 +713,14 @@ class WorkflowService
     {
         // 更新供應商統計
         $this->db->query(
-            'UPDATE users SET completed_tasks = completed_tasks + 1, updated_at = NOW() WHERE id = :id',
+            "UPDATE users SET completed_tasks = completed_tasks + 1, updated_at = datetime('now') WHERE id = :id",
             ['id' => $supplierId]
         );
 
         // 更新創作者統計
         if ($creatorId) {
             $this->db->query(
-                'UPDATE users SET completed_tasks = completed_tasks + 1, updated_at = NOW() WHERE id = :id',
+                "UPDATE users SET completed_tasks = completed_tasks + 1, updated_at = datetime('now') WHERE id = :id",
                 ['id' => $creatorId]
             );
         }

@@ -394,7 +394,7 @@ class AuditService
      */
     public function getAuditLogStats(): array
     {
-        $sql = "SELECT 
+        $sql = "SELECT
                     action,
                     COUNT(*) as count,
                     MIN(created_at) as first_occurrence,
@@ -411,8 +411,8 @@ class AuditService
      */
     public function cleanupOldLogs(int $daysToKeep = 90): int
     {
-        $sql = "DELETE FROM audit_logs 
-                WHERE created_at < NOW() - INTERVAL ':days days'";
+        $sql = "DELETE FROM audit_logs
+                WHERE created_at < datetime('now', '-' || :days || ' days')";
 
         $this->db->execute($sql, ['days' => $daysToKeep]);
 

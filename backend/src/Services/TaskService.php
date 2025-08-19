@@ -30,6 +30,16 @@ class TaskService
         // 設置預設值
         $taskData['status'] = 'open';
         $taskData['created_at'] = date('Y-m-d H:i:s');
+        $taskData['updated_at'] = date('Y-m-d H:i:s');
+
+        // 序列化陣列欄位為JSON
+        if (isset($taskData['content_types']) && is_array($taskData['content_types'])) {
+            $taskData['content_types'] = json_encode($taskData['content_types']);
+        }
+
+        if (isset($taskData['deliverables']) && is_array($taskData['deliverables'])) {
+            $taskData['deliverables'] = json_encode($taskData['deliverables']);
+        }
 
         // 計算過期時間
         if (isset($taskData['deadline'])) {
@@ -229,7 +239,7 @@ class TaskService
                 FROM tasks t
                 JOIN users u ON t.creator_id = u.id
                 WHERE t.status = 'open'
-                  AND t.deadline > NOW()
+                  AND t.deadline > datetime('now')
                   AND t.budget_min <= :max_budget
                 ORDER BY
                     CASE WHEN t.location IS NOT NULL AND u.location IS NOT NULL
@@ -510,7 +520,7 @@ class TaskService
 
         // 獲取可申請的任務數量
         $availableTasksCount = $this->db->fetchColumn(
-            "SELECT COUNT(*) FROM tasks WHERE status IN ('open', 'collecting') AND deadline > NOW()",
+            "SELECT COUNT(*) FROM tasks WHERE status IN ('open', 'collecting') AND deadline > datetime('now')",
             []
         );
 
@@ -519,7 +529,7 @@ class TaskService
             "SELECT t.*, u.username as supplier_name
              FROM tasks t
              JOIN users u ON t.supplier_id = u.id
-             WHERE t.status IN ('open', 'collecting') AND t.deadline > NOW()
+             WHERE t.status IN ('open', 'collecting') AND t.deadline > datetime('now')
              ORDER BY t.created_at DESC
              LIMIT 5",
             []

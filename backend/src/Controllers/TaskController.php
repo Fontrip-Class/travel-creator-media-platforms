@@ -514,6 +514,32 @@ class TaskController
     // ==================== 角色專用儀表板方法 ====================
 
     /**
+     * 管理員儀表板
+     */
+    public function getAdminDashboard(Request $request, Response $response): Response
+    {
+        try {
+            $userId = $request->getAttribute('user_id');
+            $user = $request->getAttribute('user');
+
+            if (!$userId) {
+                return $this->apiResponse->error($response, '無法獲取用戶資訊', 400);
+            }
+
+            if ($user['role'] !== 'admin') {
+                return $this->apiResponse->forbidden($response, '需要管理員權限');
+            }
+
+            $stats = $this->taskService->getUserTaskStats($userId, 'admin');
+
+            return $this->apiResponse->success($response, $stats, '管理員儀表板數據獲取成功');
+
+        } catch (\Exception $e) {
+            return $this->apiResponse->handleException($response, $e);
+        }
+    }
+
+    /**
      * 供應商儀表板
      */
     public function getSupplierDashboard(Request $request, Response $response): Response

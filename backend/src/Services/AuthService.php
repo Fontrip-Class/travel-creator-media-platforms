@@ -280,7 +280,7 @@ class AuthService
     public function resetPassword(string $token, string $newPassword): bool
     {
         $user = $this->db->fetchOne(
-            'SELECT id FROM users WHERE reset_token = :token AND reset_token_expires > NOW()',
+            "SELECT id FROM users WHERE reset_token = :token AND reset_token_expires > datetime('now')",
             ['token' => $token]
         );
 

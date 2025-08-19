@@ -101,22 +101,22 @@ class UserService
             $params['search'] = '%' . $filters['search'] . '%';
         }
 
-        // 地點篩選
-        if (!empty($filters['location'])) {
-            $whereConditions[] = "u.location IS NOT NULL AND ST_DWithin(u.location, ST_GeomFromText(:location), 50000)";
-            $params['location'] = $filters['location'];
-        }
-
         $whereClause = implode(' AND ', $whereConditions);
 
-        // 主查詢 - 獲取用戶基本資訊
+        // 主查詢 - 獲取用戶基本資訊（簡化版）
         $sql = "SELECT
-                    u.*,
-                    COUNT(be.id) as business_entities_count,
-                    GROUP_CONCAT(be.business_type) as business_types
+                    u.id,
+                    u.username,
+                    u.email,
+                    u.role,
+                    u.phone,
+                    u.contact,
+                    u.is_active,
+                    u.is_verified,
+                    u.avatar_url,
+                    u.created_at,
+                    u.updated_at
                 FROM users u
-                LEFT JOIN user_business_permissions ubp ON u.id = ubp.user_id
-                LEFT JOIN business_entities be ON ubp.business_entity_id = be.id
                 WHERE {$whereClause}
                 GROUP BY u.id
                 ORDER BY u.created_at DESC
