@@ -1,3 +1,4 @@
+import { usePermission } from "@/components/auth/PermissionGuard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,7 @@ export default function Navigation() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { isAdmin, isSupplier, isCreator } = usePermission();
 
   const handleLogout = async () => {
     try {
@@ -67,6 +69,11 @@ export default function Navigation() {
       default:
         return '/';
     }
+  };
+
+  // 檢查用戶是否有特定權限
+  const hasPermission = (requiredRole: string) => {
+    return user?.role === requiredRole;
   };
 
   // 獲取用戶角色對應的主要功能
@@ -174,8 +181,8 @@ export default function Navigation() {
                   我的工作台
                 </Link>
 
-                {/* 快速功能入口 */}
-                {user.role === 'supplier' && (
+                {/* 快速功能入口 - 根據角色顯示 */}
+                {isSupplier() && (
                   <Link
                     to="/supplier/create-task"
                     className="text-sm font-medium text-gray-700 hover:text-primary flex items-center gap-1"
@@ -185,7 +192,7 @@ export default function Navigation() {
                   </Link>
                 )}
 
-                {user.role === 'creator' && (
+                {isCreator() && (
                   <Link
                     to="/tasks"
                     className="text-sm font-medium text-gray-700 hover:text-primary flex items-center gap-1"
@@ -195,7 +202,8 @@ export default function Navigation() {
                   </Link>
                 )}
 
-                {user.role === 'admin' && (
+                {/* 管理後台按鈕 - 嚴格權限控制 */}
+                {isAdmin() && (
                   <Link
                     to="/admin/dashboard"
                     className="text-sm font-medium text-gray-700 hover:text-primary flex items-center gap-1"
@@ -280,12 +288,22 @@ export default function Navigation() {
                       </Link>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem asChild>
-                      <Link to="/settings" className="flex items-center gap-2">
-                        <Settings className="w-4 h-4" />
-                        設定
-                      </Link>
-                    </DropdownMenuItem>
+                    {/* 設定功能 - 根據角色顯示不同選項 */}
+                    {isAdmin() ? (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/settings" className="flex items-center gap-2">
+                          <Settings className="w-4 h-4" />
+                          系統設定
+                        </Link>
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem asChild>
+                        <Link to="/settings" className="flex items-center gap-2">
+                          <Settings className="w-4 h-4" />
+                          個人設定
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
 
                     <DropdownMenuSeparator />
 
@@ -358,6 +376,29 @@ export default function Navigation() {
                       {feature.label}
                     </Link>
                   ))}
+
+                  {/* 手機版額外功能按鈕 */}
+                  {isSupplier() && (
+                    <Link
+                      to="/supplier/create-task"
+                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50`}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      發布任務
+                    </Link>
+                  )}
+
+                  {isCreator() && (
+                    <Link
+                      to="/tasks"
+                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-gray-50`}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <FileText className="w-4 h-4" />
+                      瀏覽任務
+                    </Link>
+                  )}
                 </>
               ) : (
                 <>

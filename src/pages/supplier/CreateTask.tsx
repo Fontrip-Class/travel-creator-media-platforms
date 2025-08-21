@@ -1,34 +1,28 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { SEO } from "@/components/SEO";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import apiService from "@/lib/api";
-import { 
-  ArrowLeft, 
-  Plus, 
-  X, 
-  Eye, 
-  Save, 
-  Image, 
-  Video, 
-  FileText, 
-  Music, 
-  DollarSign, 
-  Gift, 
-  MapPin,
-  Calendar,
-  MapPin as LocationIcon,
-  Users,
-  Tag
+import {
+    ArrowLeft,
+    DollarSign,
+    Eye,
+    FileText,
+    Gift,
+    Image,
+    MapPin,
+    Music,
+    Save,
+    Video,
+    X
 } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface TaskFormData {
   title: string;
@@ -75,7 +69,7 @@ export default function CreateTask() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-  
+
   const [formData, setFormData] = useState<TaskFormData>({
     title: "",
     summary: "",
@@ -97,16 +91,16 @@ export default function CreateTask() {
     tags: []
   });
 
-  const [errors, setErrors] = useState<Partial<TaskFormData>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: keyof TaskFormData, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-    
+
     // 清除錯誤
-    if (errors[field as keyof TaskFormData]) {
+    if (errors[field]) {
       setErrors(prev => ({
         ...prev,
         [field]: undefined
@@ -131,18 +125,26 @@ export default function CreateTask() {
         ? prev.contentTypes.filter(id => id !== typeId)
         : [...prev.contentTypes, typeId]
     }));
+
+    // 清除内容类型错误
+    if (errors.contentTypes) {
+      setErrors(prev => ({
+        ...prev,
+        contentTypes: undefined
+      }));
+    }
   };
 
   const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && e.currentTarget.value.trim()) {
       e.preventDefault();
       let newTag = e.currentTarget.value.trim();
-      
+
       // 自動添加 hashtag 前綴（如果沒有）
       if (!newTag.startsWith('#')) {
         newTag = `#${newTag}`;
       }
-      
+
       // 檢查標籤數量限制
       if (formData.tags.length >= 20) {
         toast({
@@ -152,7 +154,7 @@ export default function CreateTask() {
         });
         return;
       }
-      
+
       // 檢查標籤是否已存在
       if (formData.tags.includes(newTag)) {
         toast({
@@ -162,12 +164,12 @@ export default function CreateTask() {
         });
         return;
       }
-      
+
       setFormData(prev => ({
         ...prev,
         tags: [...prev.tags, newTag]
       }));
-      
+
       e.currentTarget.value = '';
     }
   };
@@ -180,30 +182,31 @@ export default function CreateTask() {
   };
 
   const validateForm = () => {
-    const newErrors: Partial<TaskFormData> = {};
-    
+    const newErrors: Record<string, string> = {};
+
     if (!formData.title.trim()) {
       newErrors.title = "請輸入任務標題";
     }
-    
+
     if (!formData.description.trim()) {
       newErrors.description = "請輸入任務描述";
     }
-    
+
     if (!formData.deadline) {
       newErrors.deadline = "請選擇截止日期";
     }
-    
-    if (formData.contentTypes.length === 0) {
+
+    // 改进内容类型验证
+    if (!formData.contentTypes || formData.contentTypes.length === 0) {
       newErrors.contentTypes = "請至少選擇一種內容類型";
     }
-    
+
     // 根據報酬類型進行不同的驗證
     if (formData.reward_type === 'money') {
       if (formData.budget.type === "fixed" && formData.budget.min <= 0) {
         newErrors.budget = "請輸入有效的預算金額";
       }
-      
+
       if (formData.budget.type === "range" && (formData.budget.min <= 0 || formData.budget.max <= formData.budget.min)) {
         newErrors.budget = "請輸入有效的預算範圍";
       }
@@ -212,14 +215,14 @@ export default function CreateTask() {
         newErrors.gift_details = "請詳細描述提供的贈品或體驗內容";
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast({
         title: "表單驗證失敗",
@@ -228,9 +231,9 @@ export default function CreateTask() {
       });
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const apiData = {
         title: formData.title,
@@ -247,9 +250,10 @@ export default function CreateTask() {
         examples: formData.examples,
         tags: formData.tags
       };
-      
-      const response = await apiService.createTask(apiData);
-      
+
+      // 注意：这里需要根据实际的API接口调整数据结构
+      const response = await apiService.createTask(apiData as any);
+
       if (response.success) {
         toast({
           title: "任務創建成功",
@@ -283,19 +287,19 @@ export default function CreateTask() {
           <h3 className="text-2xl font-bold mb-2">{formData.title || "任務標題"}</h3>
           <p className="text-gray-600">{formData.summary || "任務摘要"}</p>
         </div>
-        
+
         <div>
           <h4 className="font-semibold mb-2">任務描述</h4>
           <p className="text-gray-700 whitespace-pre-wrap">
             {formData.description || "請填寫任務描述"}
           </p>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <span className="font-medium">報酬類型：</span>
             <span>
-              {formData.reward_type === 'money' ? '金錢報酬' : 
+              {formData.reward_type === 'money' ? '金錢報酬' :
                formData.reward_type === 'gift' ? '贈品報酬' : '體驗報酬'}
             </span>
           </div>
@@ -312,12 +316,12 @@ export default function CreateTask() {
             <span>{formData.contentTypes.length > 0 ? formData.contentTypes.join(", ") : "未選擇"}</span>
           </div>
         </div>
-        
+
         {formData.reward_type === 'money' && (
           <div>
             <span className="font-medium">預算：</span>
             <span>
-              {formData.budget.type === "fixed" 
+              {formData.budget.type === "fixed"
                 ? `NT$ ${formData.budget.min.toLocaleString()}`
                 : formData.budget.type === "range"
                 ? `NT$ ${formData.budget.min.toLocaleString()} - ${formData.budget.max.toLocaleString()}`
@@ -326,7 +330,7 @@ export default function CreateTask() {
             </span>
           </div>
         )}
-        
+
         {(formData.reward_type === 'gift' || formData.reward_type === 'experience') && formData.gift_details && (
           <div>
             <h4 className="font-semibold mb-2">
@@ -335,7 +339,7 @@ export default function CreateTask() {
             <p className="text-gray-700 whitespace-pre-wrap">{formData.gift_details}</p>
           </div>
         )}
-        
+
         {formData.tags.length > 0 && (
           <div>
             <h4 className="font-semibold mb-2">標籤</h4>
@@ -358,7 +362,7 @@ export default function CreateTask() {
         title="創建任務 | 觀光署旅遊服務與行銷創作資源管理與媒合平台"
         description="發布您的行銷任務，尋找合適的創作者"
       />
-      
+
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-6">
           <Button
@@ -369,13 +373,13 @@ export default function CreateTask() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             返回儀表板
           </Button>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">創建行銷任務</h1>
               <p className="text-gray-600 mt-2">發布您的行銷需求，尋找合適的創作者</p>
             </div>
-            
+
             <Button
               type="button"
               variant="outline"
@@ -412,7 +416,7 @@ export default function CreateTask() {
                       <p className="text-sm text-red-500 mt-1">{errors.title}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="summary" className="text-base font-medium">
                       任務摘要
@@ -424,7 +428,7 @@ export default function CreateTask() {
                       placeholder="請簡要描述任務內容"
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="description" className="text-base font-medium">
                       任務描述 *
@@ -480,7 +484,7 @@ export default function CreateTask() {
                       ))}
                     </div>
                   </div>
-                  
+
                   {/* 金錢報酬的預算設定 */}
                   {formData.reward_type === 'money' && (
                     <>
@@ -498,7 +502,7 @@ export default function CreateTask() {
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="budgetMin" className="text-base font-medium">
@@ -516,7 +520,7 @@ export default function CreateTask() {
                             />
                           </div>
                         </div>
-                        
+
                         {formData.budget.type === "range" && (
                           <div>
                             <Label htmlFor="budgetMax" className="text-base font-medium">
@@ -538,7 +542,7 @@ export default function CreateTask() {
                       </div>
                     </>
                   )}
-                  
+
                   {/* 贈品或體驗的詳情描述 */}
                   {(formData.reward_type === 'gift' || formData.reward_type === 'experience') && (
                     <div>
@@ -549,8 +553,8 @@ export default function CreateTask() {
                         id="giftDetails"
                         value={formData.gift_details}
                         onChange={(e) => handleInputChange("gift_details", e.target.value)}
-                        placeholder={formData.reward_type === 'gift' 
-                          ? "請詳細描述提供的贈品內容、數量、價值等" 
+                        placeholder={formData.reward_type === 'gift'
+                          ? "請詳細描述提供的贈品內容、數量、價值等"
                           : "請詳細描述提供的體驗內容、時長、地點等"
                         }
                         rows={4}
@@ -561,7 +565,7 @@ export default function CreateTask() {
                       )}
                     </div>
                   )}
-                  
+
                   <div>
                     <Label htmlFor="deadline" className="text-base font-medium">
                       截止日期 *
@@ -577,7 +581,7 @@ export default function CreateTask() {
                       <p className="text-sm text-red-500 mt-1">{errors.deadline}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="location" className="text-base font-medium">
                       任務地點
@@ -614,7 +618,13 @@ export default function CreateTask() {
                           <div className="flex items-center space-x-3">
                             <Checkbox
                               checked={formData.contentTypes.includes(type.id)}
-                              onCheckedChange={() => handleContentTypeToggle(type.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  handleContentTypeToggle(type.id);
+                                } else {
+                                  handleContentTypeToggle(type.id);
+                                }
+                              }}
                             />
                             <div>
                               <div className="flex items-center space-x-2">
@@ -631,7 +641,7 @@ export default function CreateTask() {
                       <p className="text-sm text-red-500 mt-1">{errors.contentTypes}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="requirements" className="text-base font-medium">
                       具體需求
@@ -644,7 +654,7 @@ export default function CreateTask() {
                       rows={4}
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="targetAudience" className="text-base font-medium">
                       目標受眾
@@ -656,7 +666,7 @@ export default function CreateTask() {
                       placeholder="請描述目標受眾的特徵"
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="examples" className="text-base font-medium">
                       參考範例
@@ -691,7 +701,7 @@ export default function CreateTask() {
                       標籤將幫助創作者更好地理解您的需求
                     </p>
                   </div>
-                  
+
                   {formData.tags.length > 0 && (
                     <div>
                       <Label className="text-base font-medium">已添加的標籤</Label>
