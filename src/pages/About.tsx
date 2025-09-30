@@ -1,13 +1,8 @@
-﻿import { SEO } from "@/components/SEO";
+import { SEO } from "@/components/SEO";
 import { Badge } from "@/components/ui/badge";
-
 export default function About() {
-  return (
-    <main className="min-h-screen">
-      <SEO
-        title="關於我們 | 觀光署旅遊服務與行銷創作資源管理與媒合平台"
-        description="我們致力於為旅遊產業提供全方位的服務，協助供應商、創作者和媒體建立合作關係"
-      />
+  return <main className="min-h-screen">
+      <SEO title="關於我們 | 觀光署旅遊服務與行銷創作資源管理與媒合平台" description="我們致力於為旅遊產業提供全方位的服務，協助供應商、創作者和媒體建立合作關係" />
       <header className="bg-hero text-white">
         <div className="container py-14">
           <h1 className="text-3xl md:text-4xl font-bold mb-3">關於我們的平台</h1>
@@ -96,7 +91,7 @@ export default function About() {
                 <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
                   2
                 </div>
-                <h3 className="font-semibold mb-2">智能媒合</h3>
+                <h3 className="font-semibold mb-2">自動化媒合</h3>
                 <p className="text-sm text-muted-foreground">
                   平台根據需求特性，智能推薦合適的創作者與媒體夥伴
                 </p>
@@ -360,7 +355,5 @@ export default function About() {
           </div>
         </div>
       </section>
-    </main>
-  );
+    </main>;
 }
-
