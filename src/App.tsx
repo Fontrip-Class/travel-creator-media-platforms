@@ -25,6 +25,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import About from "./pages/About";
 import BackendTest from "./pages/BackendTest";
+import PlatformGuide from "./pages/PlatformGuide";
 import BusinessEntityManagement from "./pages/BusinessEntityManagement";
 import CreatorDashboard from "./pages/creator/CreatorDashboard";
 import CreatorPortfolio from "./pages/creator/CreatorPortfolio";
@@ -74,6 +75,7 @@ const App = () => (
               <Route path="/dashboard" element={<DashboardRedirect />} />
               <Route path="/my-workspace" element={<RoleDashboardEntry />} />
               <Route path="/about" element={<About />} />
+              <Route path="/platform-guide" element={<PlatformGuide />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/faq" element={<FAQ />} />
 
