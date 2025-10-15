@@ -399,3 +399,57 @@ export interface TaskMilestone {
   completed_at?: string;
   deliverables: string[];
 }
+
+export interface TaskFile {
+  id: string;
+  task_id: string;
+  uploader_id: string;
+  file_url: string;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  description?: string;
+  created_at: string;
+}
+
+export interface TaskRating {
+  id: string;
+  task_id: string;
+  rater_id: string;
+  rated_id: string;
+  rating: number;
+  comment?: string;
+  created_at: string;
+}
+
+export interface BusinessFilters {
+  type?: 'supplier' | 'creator' | 'media';
+  status?: 'pending' | 'verified' | 'rejected';
+  search?: string;
+  tags?: string[];
+}
+
+export interface BusinessManagementSummary {
+  total: number;
+  verified: number;
+  pending: number;
+  rejected: number;
+  by_type: {
+    supplier: number;
+    creator: number;
+    media: number;
+  };
+}
+
+export interface UserRolesSummary {
+  user_id: string;
+  username: string;
+  email: string;
+  roles: string[];
+  business_entities: {
+    id: string;
+    name: string;
+    type: string;
+    permission_level: string;
+  }[];
+}

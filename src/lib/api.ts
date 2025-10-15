@@ -234,22 +234,6 @@ class ApiService {
     return this.request('/media/stats');
   }
 
-  async logout(): Promise<ApiResponse> {
-    return this.request('/auth/logout', {
-      method: 'POST',
-    });
-  }
-
-  async refreshToken(): Promise<ApiResponse<{ token: string }>> {
-    return this.request<{ token: string }>('/auth/refresh', {
-      method: 'POST',
-    });
-  }
-
-  async getProfile(): Promise<ApiResponse<User>> {
-    return this.request<User>('/users/profile');
-  }
-
   async updateProfile(profileData: Partial<User>): Promise<ApiResponse<User>> {
     return this.request<User>('/users/profile', {
       method: 'PUT',
@@ -587,7 +571,7 @@ class ApiService {
 
   // ==================== 媒體資產管理 ====================
 
-  async getMediaAssets(businessId: string): Promise<ApiResponse<MediaAsset[]>> {
+  async getBusinessMediaAssets(businessId: string): Promise<ApiResponse<MediaAsset[]>> {
     return this.request<MediaAsset[]>(`/business-entities/${businessId}/media-assets`);
   }
 
